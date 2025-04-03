@@ -1,35 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import CalendarComponent from "./components/CalendarComponent";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [reservedDateTime, setReservedDateTime] = useState(null);
+
+  const handleReserve = ({ date, time }) => {
+    setReservedDateTime({ date, time });
+    alert(`Turno reservado para el ${date.toDateString()} a las ${time} hs`);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
+    <div>
+      <h1>Reserva tu turno en Keramik</h1>
+      <CalendarComponent onReserve={handleReserve} />
+      
+      {reservedDateTime && (
+        <p style={{ marginTop: "20px", fontWeight: "bold", color: "green" }}>
+          Turno confirmado para el {reservedDateTime.date.toDateString()} a las {reservedDateTime.time} hs
         </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
