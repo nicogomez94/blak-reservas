@@ -5,7 +5,7 @@ import "./CalendarComponent.css";
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
-const CalendarComponent = () => {
+const CalendarComponent = ({ servicio }) => {
   const [date, setDate] = useState(new Date());
   const [time, setTime] = useState("");
   const [reservas, setReservas] = useState([]);
@@ -48,13 +48,14 @@ const CalendarComponent = () => {
     if (!date || !time) return;
 
     try {
-      const paymentData = {
-        transaction_amount: 27,
-        description: `Reserva para el día ${date.toDateString()} a las ${time}`,
-        payer: {
-          email: "test_user_123456@testuser.com"
-        }
-      };
+        const paymentData = {
+            transaction_amount: servicio.precio,
+            description: `${servicio.label} - Reserva para el día ${date.toDateString()} a las ${time}`,
+            payer: {
+                email: "test_user_123456@testuser.com"
+            }
+        };
+        
 
       const response = await axios.post("http://localhost:3001/create_preference", paymentData);
 

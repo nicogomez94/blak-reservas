@@ -42,6 +42,7 @@ const AdminPanel = () => {
 						<th>Fecha</th>
 						<th>Hora</th>
 						<th>Estado</th>
+						<th>Descripcion</th>
 						<th>Acción</th>
 					</tr>
 				</thead>
@@ -52,6 +53,7 @@ const AdminPanel = () => {
 							<td>{r.fecha}</td>
 							<td>{r.hora}</td>
 							<td>{r.status}</td>
+							<td>{r.servicio}</td>
 							<td>
 								<button onClick={() => eliminarReserva(r.id)}>Eliminar</button>
 							</td>

@@ -58,7 +58,8 @@ app.post("/webhook", async (req, res) => {
         if (status == "200") {
             const description = mpPayment.additional_info?.items?.[0]?.title || "";
             const match = description.match(/([A-Za-z]{3} [A-Za-z]{3} \d{1,2} \d{4}) a las (\d{2}:\d{2})/);
-            // const email = mpPayment.payer?.email || "sin_email@keramik.fake";
+            const partes = description.split(" - ");
+            const servicio = partes[0]; // PLOTEO CHICO $249.000
             const email = "nicolasgomez94@gmail.com";
           
                 if (match) {
@@ -68,7 +69,7 @@ app.post("/webhook", async (req, res) => {
                 const fecha = dateObj.toISOString().split("T")[0]; // YYYY-MM-DD
                 const hora = match[2]; // HH:MM
             
-                await db("reservas").insert({ fecha, hora, status }); // ojo: status acá sigue siendo "200"
+                await db("reservas").insert({ fecha, hora, status, servicio }); // ojo: status acá sigue siendo "200"
                 await enviarMailDeConfirmacion({ to: email, fecha, hora }); //mail
                 console.log(`✅ Reserva guardada para ${fecha} a las ${hora}`);
 
