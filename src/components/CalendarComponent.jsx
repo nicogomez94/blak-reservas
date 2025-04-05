@@ -11,22 +11,34 @@ const CalendarComponent = () => {
 
   const handleReserveClick = async () => {
     if (!date || !time) return;
+  
+        try {
+            const paymentData = {
+                transaction_amount: 1500,
+                description: `Reserva para el día ${date.toDateString()} a las ${time}`,
+                payer: {
+                email: "test_user_123456@testuser.com"
+                }
+            };
+    
+            const response = await fetch("http://localhost:3001/create_payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(paymentData)
+            });
+        
+            const data = await response.json();
+            if (data.init_point) {
+                window.location.href = data.init_point;
+            } else {
+                console.error("No se generó init_point:", data);
+            }
 
-    try {
-      const response = await fetch("http://localhost:3001/create_preference", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: date.toDateString(), time }),
-      });
+        }catch (error) {
+            console.error("Error al iniciar el pago:", error);
+        }
+    };
 
-      const data = await response.json();
-      if (data.init_point) {
-        window.location.href = data.init_point; // Redirigir a Mercado Pago
-      }
-    } catch (error) {
-      console.error("Error al iniciar el pago:", error);
-    }
-  };
 
   return (
     <div className="calendar-container">
