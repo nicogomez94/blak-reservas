@@ -28,7 +28,13 @@ app.post("/create_preference", async (req, res) => {
             },
         ],
         payer: req.body.payer,
-        notification_url: `${API_URL}/webhook`
+        notification_url: `${API_URL}/webhook`,
+        back_urls: {
+			success: "http://localhost:5173/success",
+			failure: "http://localhost:5173/",
+			pending: "http://localhost:5173/"
+		},
+		auto_return: "approved"
         },
       });
   

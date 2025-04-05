@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CalendarComponent from "./components/CalendarComponent";
 import AdminPanel from "./components/AdminPanel";
+import Success from "./components/Success";
 
 function App() {
 	const [reservedDateTime, setReservedDateTime] = useState(null);
@@ -18,7 +19,7 @@ function App() {
 					path="/"
 					element={
 						<div>
-							<h1>Reserva tu turno en BLAK COCK</h1>
+							<h1 className="main_h">Reserva tu turno en BLAK COCK</h1>
 							<CalendarComponent onReserve={handleReserve} />
 
 							{reservedDateTime && (
@@ -36,6 +37,7 @@ function App() {
 					}
 				/>
 				<Route path="/admin" element={<AdminPanel />} />
+				<Route path="/success" element={<Success />} />
 			</Routes>
 		</Router>
 	);
