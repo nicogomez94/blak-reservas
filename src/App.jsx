@@ -19,11 +19,26 @@ function App() {
 	return (
 		<Router>
 			<Routes>
-			<Route
+				<Route
 					path="/"
 					element={
 						<div>
-							<h1 className="main_h">Reserva tu turno en BLAK COCK</h1>
+							<div
+								style={{
+									backgroundImage: "url('https://avatar.setmore.com/files/img/fhwXFmJ3ua0p/7bfb04f3-78f7-4357-b95a-113b0bd61127.jpeg?crop=893%3B300%3B3%3B594&w=768')",
+									backgroundPosition: "center",
+									textAlign: "center",
+									color: "white",
+									borderRadius: "20px"
+								}}
+							>
+								<img
+									src="https://avatar.setmore.com/files/img/fNKfU1EFJAXg/1740366217459.png?w=128&h=128"
+									alt="BLAK logo"
+									className="logo-principal"
+								/>
+							</div>
+							<h1 className="main_h">Reserva tu Turno</h1>
 
 							{!servicioSeleccionado ? (
 								<SeleccionServicio onSeleccionar={setServicioSeleccionado} />

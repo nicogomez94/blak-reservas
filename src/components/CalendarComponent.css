@@ -19,7 +19,7 @@
   }
   
   .react-calendar__tile--active {
-    background: var(--blak-verde);
+    background: var(--blak-verde-oscuro) !important;
     color: white !important;
   }
 

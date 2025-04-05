@@ -2,18 +2,30 @@
   --blak-verde: rgb(0 255 1);
   --blak-verde-oscuro: rgb(0, 163, 0);
 }
+
 a:link{
   color: var(--blak-verde-oscuro) !important;
 }
 body{
-  background-color: black;
+    background: rgb(61,61,61);
+  	background: radial-gradient(circle, rgba(61,61,61,1) 0%, rgba(0,0,0,1) 100%);
+}
+.logo-principal{
+	border-radius: 50%;
+	width: 40%;
+	box-shadow: 0 0 15px rgb(16, 16, 16);
+}
+.main_h{
+	color: var(--blak-verde) !important;
+}
+.portada{
+	height: 200px;
+	position: absolute;
+	background: url('/src/assets/portada.jpg');
 }
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
-}
-.main_h{
-  color: var(--blak-verde);
 }

@@ -60,7 +60,8 @@ app.post("/webhook", async (req, res) => {
             const match = description.match(/([A-Za-z]{3} [A-Za-z]{3} \d{1,2} \d{4}) a las (\d{2}:\d{2})/);
             const partes = description.split(" - ");
             const servicio = partes[0]; // PLOTEO CHICO $249.000
-            const email = "nicolasgomez94@gmail.com";
+            // const email = mpPayment.payer?.email || "sin_email@blak.fake";
+            const email = "nicolasgomez94@gmail.com";//HARD
           
                 if (match) {
                 const rawDate = `${match[1]} ${match[2]}`;

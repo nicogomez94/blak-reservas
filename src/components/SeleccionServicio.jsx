@@ -7,7 +7,7 @@ const servicios = [
 const SeleccionServicio = ({ onSeleccionar }) => {
 	return (
 		<div style={{ padding: "20px" }}>
-			<h2>Elegí tu servicio</h2>
+			<h2 style={{ color: "white"}}>Elegí tu servicio</h2>
 			<ul style={{ listStyle: "none", padding: 0 }}>
 				{servicios.map((serv) => (
 					<li key={serv.id} style={{ marginBottom: "15px" }}>
