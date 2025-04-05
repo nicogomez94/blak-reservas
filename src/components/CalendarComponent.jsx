@@ -21,7 +21,7 @@ const CalendarComponent = () => {
                 }
             };
     
-            const response = await fetch("http://localhost:3001/create_payment", {
+            const response = await fetch("http://localhost:3001/create_preference", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(paymentData)
