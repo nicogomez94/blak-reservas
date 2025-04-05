@@ -1,17 +1,18 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import db from "./db.js";
+import dotenv from "dotenv";
 
 dotenv.config();
+const API_URL = process.env.VITE_API_URL;
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
 const client = new MercadoPagoConfig({ accessToken: 'APP_USR-7045728362832938-040422-b215197905b892d79ce5a4013a7f1fb5-2370696918' });
-
+console.log("test antes de post")
 app.post("/create_preference", async (req, res) => {
     const preference = new Preference(client);
 
@@ -26,7 +27,7 @@ app.post("/create_preference", async (req, res) => {
             },
         ],
         payer: req.body.payer,
-        notification_url: "https://2e2b-2800-2130-293f-e214-4e07-5b49-a336-477d.ngrok-free.app/webhook"
+        notification_url: `${API_URL}/webhook`
         },
       });
   
@@ -41,17 +42,14 @@ app.post("/create_preference", async (req, res) => {
 app.post("/webhook", async (req, res) => {
     const paymentInsta = new Payment(client);
     const payment = req.body;
-  
+
     if (payment?.type === "payment") {
       try {
         const mpPayment = await paymentInsta.get({ id: payment.data.id });
         const status = mpPayment.api_response.status;
 
         if (status == "200") {
-            console.log(mpPayment.additional_info.items);
             const description = mpPayment.additional_info?.items?.[0]?.title || "";
-            console.log("descri-->" + description);
-          
             const match = description.match(/([A-Za-z]{3} [A-Za-z]{3} \d{1,2} \d{4}) a las (\d{2}:\d{2})/);
           
                 if (match) {

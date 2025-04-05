@@ -3,6 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "./CalendarComponent.css";
 import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const CalendarComponent = () => {
   const [date, setDate] = useState(new Date());
@@ -15,7 +16,7 @@ const CalendarComponent = () => {
     ];
     
     useEffect(() => {
-        axios.get("https://fce3-2800-2130-293f-e214-4e07-5b49-a336-477d.ngrok-free.app/reservas", {
+        axios.get(`${API_URL}/reservas`, {
             headers: {
                 "ngrok-skip-browser-warning": "true"
             }
@@ -48,7 +49,7 @@ const CalendarComponent = () => {
 
     try {
       const paymentData = {
-        transaction_amount: 5000,
+        transaction_amount: 27,
         description: `Reserva para el día ${date.toDateString()} a las ${time}`,
         payer: {
           email: "test_user_123456@testuser.com"
