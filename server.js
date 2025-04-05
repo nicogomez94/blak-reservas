@@ -63,7 +63,7 @@ app.post("/webhook", async (req, res) => {
             
                 await db("reservas").insert({ fecha, hora, status }); // ojo: status acá sigue siendo "200"
                 console.log(`✅ Reserva guardada para ${fecha} a las ${hora}`);
-                
+
                 } else {
                     console.log("❌ Error al guardar reserva. falló al matchear.-->"+match);
                 }
@@ -87,6 +87,17 @@ app.post("/webhook", async (req, res) => {
 app.get("/reservas", async (req, res) => {
     const reservas = await db("reservas").select();
     res.json(reservas);
+});
+
+app.delete("/reservas/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db("reservas").where("id", id).del();
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Error al eliminar reserva:", error);
+      res.status(500).json({ success: false, error: "No se pudo eliminar la reserva." });
+    }
 });
 
 // Iniciar el servidor en el puerto 3001
