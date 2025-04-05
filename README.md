@@ -1,6 +1,6 @@
-# 🧼 Sistema de Reservas para Keramik
+# 🧼 Sistema de Reservas para BLAK
 
-Sistema web completo para la gestión de turnos en **Keramik**, un centro de detailing automotriz.  
+Sistema web completo para la gestión de turnos en **BLAK**, un centro de detailing automotriz.  
 Permite a los clientes seleccionar una fecha y horario disponibles, realizar un pago con Mercado Pago, y recibir un correo de confirmación automático.
 
 ---
