@@ -3,6 +3,7 @@ import cors from "cors";
 import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import db from "./db.js";
 import dotenv from "dotenv";
+import { enviarMailDeConfirmacion } from "./mailer.js";
 
 dotenv.config();
 const API_URL = process.env.VITE_API_URL;
@@ -51,6 +52,8 @@ app.post("/webhook", async (req, res) => {
         if (status == "200") {
             const description = mpPayment.additional_info?.items?.[0]?.title || "";
             const match = description.match(/([A-Za-z]{3} [A-Za-z]{3} \d{1,2} \d{4}) a las (\d{2}:\d{2})/);
+            // const email = mpPayment.payer?.email || "sin_email@keramik.fake";
+            const email = "nicolasgomez94@gmail.com";
           
                 if (match) {
                 const rawDate = `${match[1]} ${match[2]}`;
@@ -60,6 +63,7 @@ app.post("/webhook", async (req, res) => {
                 const hora = match[2]; // HH:MM
             
                 await db("reservas").insert({ fecha, hora, status }); // ojo: status acá sigue siendo "200"
+                await enviarMailDeConfirmacion({ to: email, fecha, hora }); //mail
                 console.log(`✅ Reserva guardada para ${fecha} a las ${hora}`);
 
                 } else {
