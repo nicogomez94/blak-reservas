@@ -14,7 +14,7 @@ const CalendarComponent = () => {
   
         try {
             const paymentData = {
-                transaction_amount: 1500,
+                transaction_amount: 50,
                 description: `Reserva para el día ${date.toDateString()} a las ${time}`,
                 payer: {
                 email: "test_user_123456@testuser.com"
