@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
+import AdminLogin from "./AdminLogin";
 import "./AdminPanel.css";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 const AdminPanel = () => {
 	const [reservas, setReservas] = useState([]);
+	const [loggedIn, setLoggedIn] = useState(false);
 
 	const fetchReservas = () => {
 		axios.get(`${API_URL}/reservas`, {
@@ -15,20 +18,19 @@ const AdminPanel = () => {
 	};
 
 	const eliminarReserva = (id) => {
-		if (!window.confirm("¿Estás seguro de eliminar este turno?")) return;
-
+		if (!window.confirm("¿Eliminar esta reserva?")) return;
 		axios.delete(`${API_URL}/reservas/${id}`, {
 			headers: { "ngrok-skip-browser-warning": "true" }
 		})
-		.then(() => {
-			setReservas(reservas.filter(r => r.id !== id));
-		})
+		.then(() => setReservas(reservas.filter(r => r.id !== id)))
 		.catch(err => console.error("Error al eliminar reserva:", err));
 	};
 
 	useEffect(() => {
-		fetchReservas();
-	}, []);
+		if (loggedIn) fetchReservas();
+	}, [loggedIn]);
+
+	if (!loggedIn) return <AdminLogin onLogin={() => setLoggedIn(true)} />;
 
 	return (
 		<div className="admin-panel">
@@ -44,16 +46,14 @@ const AdminPanel = () => {
 					</tr>
 				</thead>
 				<tbody>
-					{reservas.map((reserva) => (
-						<tr key={reserva.id}>
-							<td>{reserva.id}</td>
-							<td>{reserva.fecha}</td>
-							<td>{reserva.hora}</td>
-							<td>{reserva.status}</td>
+					{reservas.map((r) => (
+						<tr key={r.id}>
+							<td>{r.id}</td>
+							<td>{r.fecha}</td>
+							<td>{r.hora}</td>
+							<td>{r.status}</td>
 							<td>
-								<button onClick={() => eliminarReserva(reserva.id)}>
-									Eliminar
-								</button>
+								<button onClick={() => eliminarReserva(r.id)}>Eliminar</button>
 							</td>
 						</tr>
 					))}

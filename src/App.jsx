@@ -18,7 +18,7 @@ function App() {
 					path="/"
 					element={
 						<div>
-							<h1>Reserva tu turno en Keramik</h1>
+							<h1>Reserva tu turno en BLAK COCK</h1>
 							<CalendarComponent onReserve={handleReserve} />
 
 							{reservedDateTime && (
