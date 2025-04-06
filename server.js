@@ -47,46 +47,51 @@ app.post("/create_preference", async (req, res) => {
 
 //webhook MP
 app.post("/webhook", async (req, res) => {
-    const paymentInsta = new Payment(client);
-    const payment = req.body;
+	const paymentInsta = new Payment(client);
+	const payment = req.body;
 
-    if (payment?.type === "payment") {
-      try {
-        const mpPayment = await paymentInsta.get({ id: payment.data.id });
-        const status = mpPayment.api_response.status;
+	if (payment?.type === "payment") {
+		try {
+			const mpPayment = await paymentInsta.get({ id: payment.data.id });
+			const status = mpPayment.api_response.status;
 
-        if (status == "200") {
-            const description = mpPayment.additional_info?.items?.[0]?.title || "";
-            const match = description.match(/([A-Za-z]{3} [A-Za-z]{3} \d{1,2} \d{4}) a las (\d{2}:\d{2})/);
-            const partes = description.split(" - ");
-            const servicio = partes[0]; // PLOTEO CHICO $249.000
-            // const email = mpPayment.payer?.email || "sin_email@blak.fake";
-            const email = "nicolasgomez94@gmail.com";//HARD
-          
-                if (match) {
-                const rawDate = `${match[1]} ${match[2]}`;
-                const dateObj = new Date(rawDate);
-                
-                const fecha = dateObj.toISOString().split("T")[0]; // YYYY-MM-DD
-                const hora = match[2]; // HH:MM
-            
-                await db("reservas").insert({ fecha, hora, status, servicio }); // ojo: status acá sigue siendo "200"
-                await enviarMailDeConfirmacion({ to: email, fecha, hora }); //mail
-                console.log(`✅ Reserva guardada para ${fecha} a las ${hora}`);
+			if (status == "200") {
+				const description = mpPayment.additional_info?.items?.[0]?.title || "";
+				const match = description.match(/(\d{4}-\d{2}-\d{2})/); // solo buscamos la fecha
+				const partes = description.split(" - ");
+				const servicio = partes[0];
+                // const email = mpPayment.payer?.email || "sin_email@blak.fake";
+				const email = "nicolasgomez94@gmail.com"; // hardcoded por ahora
 
-                } else {
-                    console.log("❌ Error al guardar reserva. falló al matchear.-->"+match);
-                }
-            } else {
-            console.log("❌ Error de red -->"+status);
-        }
-      } catch (error) {
-        console.error("❌ Error al procesar webhook:", error);
-      }
-    }
-  
-    res.sendStatus(200);
-  });
+				if (match) {
+					const fecha = match[1];
+
+					// Verificar cupo máximo (10)
+					const reservasEnEseDia = await db("reservas").where({ fecha }).count("id as total");
+					const cantidad = reservasEnEseDia[0].total;
+
+					if (cantidad >= 10) {
+						console.warn(`❌ Día ${fecha} ya tiene el cupo completo. No se guarda la reserva.`);
+						return res.sendStatus(200);
+					}
+
+					await db("reservas").insert({ fecha, status, servicio });
+					await enviarMailDeConfirmacion({ to: email, fecha });
+					console.log(`✅ Reserva guardada para ${fecha}`);
+				} else {
+					console.log("❌ Error al guardar reserva. Falló el match. -->", match);
+				}
+			} else {
+				console.log("❌ Error de red -->", status);
+			}
+		} catch (error) {
+			console.error("❌ Error al procesar webhook:", error);
+		}
+	}
+
+	res.sendStatus(200);
+});
+
 
   app.post('/webhook', (req, res) => {
     console.log('📩 Notificación recibida de Mercado Pago:', req.body);

@@ -14,7 +14,7 @@ db.schema.hasTable("reservas").then((exists) => {
     return db.schema.createTable("reservas", (table) => {
       table.increments("id").primary();
       table.string("fecha");
-      table.string("hora");
+      // table.string("hora");
       table.string("status");
       table.string("servicio");
       table.timestamp("created_at").defaultTo(db.fn.now());

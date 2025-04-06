@@ -84,3 +84,15 @@
     background-color: #ccc;
     cursor: not-allowed;
   }
+
+
+  /* Revertir el estilo del sábado (día 6) a normal */
+.react-calendar__month-view__days__day--weekend:nth-child(7n + 6) {
+	color: inherit; /* Hereda color normal del calendario */
+	font-weight: normal;
+}
+
+.react-calendar__month-view__days__day--weekend:nth-child(7n) {
+	color: red;
+  pointer-events: none;
+}

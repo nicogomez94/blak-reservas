@@ -1,123 +1,90 @@
+// CalendarComponent.jsx
 import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
+import axios from "axios";
 import "react-calendar/dist/Calendar.css";
 import "./CalendarComponent.css";
-import axios from "axios";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 const CalendarComponent = ({ servicio }) => {
-  const [date, setDate] = useState(new Date());
-  const [time, setTime] = useState("");
-  const [reservas, setReservas] = useState([]);
+	const [date, setDate] = useState(new Date());
+	const [reservas, setReservas] = useState([]);
+	const [loading, setLoading] = useState(false);
 
-    const availableTimes = [
-        "09:00", "10:00", "11:00", "12:00",
-        "14:00", "15:00", "16:00", "17:00"
-    ];
+	useEffect(() => {
+		const fetchReservas = async () => {
+			try {
+				const res = await axios.get(`${API_URL}/reservas`, {
+					headers: { "ngrok-skip-browser-warning": "true" }
+				});
+				setReservas(res.data);
+			} catch (error) {
+				console.error("Error al cargar reservas:", error);
+			}
+		};
+		fetchReservas();
+	}, []);
+
+	const getCuposPorFecha = (fechaISO) => {
+		return reservas.filter((r) => r.fecha === fechaISO).length;
+	};
     
-    useEffect(() => {
-        axios.get(`${API_URL}/reservas`, {
-            headers: {
-                "ngrok-skip-browser-warning": "true"
-            }
-        })
-        .then(res => {
-            if (Array.isArray(res.data)) {
-              setReservas(res.data);
-            } else {
-              console.error("La respuesta no es un array:", res.data);
-              setReservas([]); // fallback seguro
-            }
-        })
-        .catch(err => {
-            console.error("Error al cargar reservas:", err);
-            setReservas([]); // fallback ante error
-        });
-    }, []);
+	const isFechaLlena = (fecha) => {
+		const fechaISO = fecha.toISOString().split("T")[0];
+		return getCuposPorFecha(fechaISO) >= 10;
+	};
 
-    const obtenerHorariosDisponibles = () => {
-        const fechaISO = date.toISOString().split("T")[0];
-        const horariosReservados = reservas
-        .filter((r) => r.fecha === fechaISO)
-        .map((r) => r.hora);
+	const handleReserveClick = async () => {
+		const fechaISO = date.toISOString().split("T")[0];
+		if (isFechaLlena(date)) {
+			alert("Ese día ya está completo. Por favor, elegí otro.");
+			return;
+		}
 
-        return availableTimes.filter((h) => !horariosReservados.includes(h));
-    };
+		try {
+			setLoading(true);
+			const paymentData = {
+				transaction_amount: servicio.precio,
+				description: `${servicio.label} - Reserva para el día ${fechaISO}`,
+				payer: { email: "test_user_123456@testuser.com" }
+			};
 
-  const handleReserveClick = async () => {
-    if (!date || !time) return;
+			const response = await fetch(`${API_URL}/create_preference`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(paymentData)
+			});
 
-    try {
-        const paymentData = {
-            transaction_amount: servicio.precio,
-            description: `${servicio.label} - Reserva para el día ${date.toDateString()} a las ${time}`,
-            payer: {
-                email: "test_user_123456@testuser.com"
-            }
-        };
-        
+			const data = await response.json();
+			if (data.init_point) {
+				window.location.href = data.init_point;
+			} else {
+				console.error("No se generó init_point:", data);
+			}
+		} catch (error) {
+			console.error("Error al iniciar el pago:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-      const response = await axios.post("http://localhost:3001/create_preference", paymentData);
+	return (
+		<div className="calendar-container">
+			<h2>Seleccioná una fecha para reservar</h2>
 
-      if (response.data.init_point) {
-        window.location.href = response.data.init_point;
-      } else {
-        console.error("No se generó init_point:", response.data);
-      }
-    } catch (error) {
-      console.error("Error al iniciar el pago:", error);
-    }
-  };
+			<Calendar
+				onChange={setDate}
+				value={date}
+				tileDisabled={({ date }) => isFechaLlena(date)}
+			/>
 
-  return (
-    <div className="calendar-container">
-      <h2>Seleccioná una fecha y hora</h2>
-
-      <Calendar
-        onChange={(d) => {
-          setDate(d);
-          setTime(""); // resetea hora al cambiar fecha
-        }}
-        value={date}
-        tileClassName={({ date: tileDate }) => {
-          const fechaISO = tileDate.toISOString().split("T")[0];
-          const tieneReserva = reservas.some((r) => r.fecha === fechaISO);
-          return tieneReserva ? "reservado" : null;
-        }}
-      />
-
-      <label htmlFor="time-select">Seleccionar horario:</label>
-      <select
-        id="time-select"
-        value={time}
-        onChange={(e) => setTime(e.target.value)}
-        disabled={obtenerHorariosDisponibles().length === 0}
-      >
-        <option value="">Seleccioná un horario</option>
-        {obtenerHorariosDisponibles().map((t) => (
-          <option key={t} value={t}>{t}</option>
-        ))}
-      </select>
-
-      {time && (
-        <p>Turno seleccionado: {date.toDateString()} a las {time} hs</p>
-      )}
-
-      <button
-        onClick={handleReserveClick}
-        disabled={!time}
-        className="reserve-button"
-      >
-        Pagar reserva ($5000)
-      </button>
-
-      {obtenerHorariosDisponibles().length === 0 && (
-        <p style={{ color: "red", marginTop: "10px" }}>
-          Todos los horarios para esta fecha están reservados.
-        </p>
-      )}
-    </div>
-  );
+			<p style={{ marginTop: "20px" }}>Fecha seleccionada: {date.toDateString()}</p>
+			<button onClick={handleReserveClick} disabled={loading}>
+				{loading ? "Redirigiendo al pago..." : `Pagar reserva (${servicio.precio.toLocaleString()} ARS)`}
+			</button>
+		</div>
+	);
 };
 
 export default CalendarComponent;
