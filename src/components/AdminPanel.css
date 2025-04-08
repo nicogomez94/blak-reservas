@@ -1,5 +1,9 @@
 .admin-panel {
-	max-width: 800px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 90%;
 	margin: 40px auto;
 	padding: 20px;
 	background-color: #f8f8f8;
@@ -24,14 +28,34 @@
 }
 
 .admin-panel button {
-	padding: 6px 10px;
-	background-color: #d9534f;
+	padding: 2px 4px;
 	color: white;
 	border: none;
 	border-radius: 4px;
 	cursor: pointer;
+	margin: 5px;
+}
+
+.btn_admin_cancelar{
+	background-color: #e17227;
+}
+.btn_admin_editar{
+	background-color: #3d4ed1;
+}
+.btn_admin_guardar{
+	background-color: #5cb85c;
+
+}
+.btn_admin_eliminar{
+	background-color: #dd2619;
 }
 
 .admin-panel button:hover {
-	background-color: #c9302c;
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+	transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.editing-row {
+	background-color: #f0f8ff; /* Un color suave para resaltar */
+	box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Sombra suave */
 }

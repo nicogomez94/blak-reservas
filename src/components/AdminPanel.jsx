@@ -36,12 +36,14 @@ const AdminPanel = () => {
   };
 
   const eliminarReserva = (id) => {
-    axios
-      .delete(`${API_URL}/reservas/${id}`, {
-        headers: { "ngrok-skip-browser-warning": "true" },
-      })
-      .then(() => setReservas(reservas.filter((r) => r.id !== id)))
-      .catch((err) => console.error("Error al eliminar reserva:", err));
+    if (confirm("¿Estás seguro de que quieres eliminar esta reserva?")) {
+      axios
+        .delete(`${API_URL}/reservas/${id}`, {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        })
+        .then(() => setReservas(reservas.filter((r) => r.id !== id)))
+        .catch((err) => console.error("Error al eliminar reserva:", err));
+    }
   };
 
   const handleEditarReserva = (reserva) => {
@@ -55,24 +57,26 @@ const AdminPanel = () => {
   };
 
   const handleGuardarCambios = async () => {
-    try {
-      // Crear una copia del objeto editedReserva sin la propiedad servicios
-      const { servicios, ...reservaData } = editedReserva;
+    if (confirm("¿Estás seguro de que quieres guardar los cambios en esta reserva?")) {
+      try {
+        // Crear una copia del objeto editedReserva sin la propiedad servicios
+        const { servicios, ...reservaData } = editedReserva;
 
-      await axios.put(`${API_URL}/reservas/${editingReservaId}`, reservaData, {
-        headers: { "ngrok-skip-browser-warning": "true" },
-      });
+        await axios.put(`${API_URL}/reservas/${editingReservaId}`, reservaData, {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
 
-      setReservas(
-        reservas.map((reserva) =>
-          reserva.id === editingReservaId ? { ...reserva, ...reservaData, servicios: reserva.servicios } : reserva
-        )
-      );
+        setReservas(
+          reservas.map((reserva) =>
+            reserva.id === editingReservaId ? { ...reserva, ...reservaData, servicios: reserva.servicios } : reserva
+          )
+        );
 
-      setEditingReservaId(null);
-      setEditedReserva({});
-    } catch (error) {
-      console.error("Error al guardar los cambios:", error);
+        setEditingReservaId(null);
+        setEditedReserva({});
+      } catch (error) {
+        console.error("Error al guardar los cambios:", error);
+      }
     }
   };
 
@@ -92,31 +96,33 @@ const AdminPanel = () => {
   };
 
   const handleGuardarCambiosServicio = async () => {
-    try {
-      await axios.put(`${API_URL}/servicios/${editingServicioId}`, editedServicio, {
-        headers: { "ngrok-skip-browser-warning": "true" },
-      });
+    if (confirm("¿Estás seguro de que quieres guardar los cambios en este servicio?")) {
+      try {
+        await axios.put(`${API_URL}/servicios/${editingServicioId}`, editedServicio, {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
 
-      // Actualizar la lista de reservas con los cambios
-      setReservas(
-        reservas.map((reserva) => {
-          if (reserva.id === editedServicio.reserva_id) {
-            return {
-              ...reserva,
-              servicios: reserva.servicios.map((servicio) =>
-                servicio.id === editingServicioId ? { ...servicio, ...editedServicio } : servicio
-              ),
-            };
-          }
-          return reserva;
-        })
-      );
+        // Actualizar la lista de reservas con los cambios
+        setReservas(
+          reservas.map((reserva) => {
+            if (reserva.id === editedServicio.reserva_id) {
+              return {
+                ...reserva,
+                servicios: reserva.servicios.map((servicio) =>
+                  servicio.id === editingServicioId ? { ...servicio, ...editedServicio } : servicio
+                ),
+              };
+            }
+            return reserva;
+          })
+        );
 
-      // Resetear el estado de edición
-      setEditingServicioId(null);
-      setEditedServicio({});
-    } catch (error) {
-      console.error("Error al guardar los cambios del servicio:", error);
+        // Resetear el estado de edición
+        setEditingServicioId(null);
+        setEditedServicio({});
+      } catch (error) {
+        console.error("Error al guardar los cambios del servicio:", error);
+      }
     }
   };
 
@@ -147,7 +153,10 @@ const AdminPanel = () => {
         </thead>
         <tbody>
           {reservas.map((reserva) => (
-            <tr key={reserva.id}>
+            <tr
+              key={reserva.id}
+              className={editingReservaId === reserva.id ? "editing-row" : ""}
+            >
               <td>{reserva.id}</td>
               <td>
                 {editingReservaId === reserva.id ? (
@@ -189,7 +198,10 @@ const AdminPanel = () => {
                 {reserva.servicios && reserva.servicios.length > 0 ? (
                   <ul>
                     {reserva.servicios.map((servicio) => (
-                      <li key={servicio.id}>
+                      <li
+                        key={servicio.id}
+                        className={editingServicioId === servicio.id ? "editing-row" : ""}
+                      >
                         {editingServicioId === servicio.id ? (
                           <>
                             <input
@@ -198,13 +210,13 @@ const AdminPanel = () => {
                               value={editedServicio.valor || ""}
                               onChange={handleServicioInputChange}
                             />
-                            <button onClick={handleGuardarCambiosServicio}>Guardar</button>
-                            <button onClick={handleCancelarEdicionServicio}>Cancelar</button>
+                            <button className="btn_admin_guardar" onClick={handleGuardarCambiosServicio}>Guardar</button>
+                            <button className="btn_admin_cancelar" onClick={handleCancelarEdicionServicio}>Cancelar</button>
                           </>
                         ) : (
                           <>
                             {servicio.nombre} ({servicio.atributo}: {servicio.valor})
-                            <button onClick={() => handleEditarServicio(servicio)}>Editar</button>
+                            <button className="btn_admin_editar" onClick={() => handleEditarServicio(servicio)}>Editar</button>
                           </>
                         )}
                       </li>
@@ -217,13 +229,13 @@ const AdminPanel = () => {
               <td>
                 {editingReservaId === reserva.id ? (
                   <>
-                    <button onClick={handleGuardarCambios}>Guardar</button>
-                    <button onClick={handleCancelarEdicion}>Cancelar</button>
+                    <button className="btn_admin_guardar" onClick={handleGuardarCambios}>Guardar</button>
+                    <button className="btn_admin_cancelar" onClick={handleCancelarEdicion}>Cancelar</button>
                   </>
                 ) : (
                   <>
-                    <button onClick={() => handleEditarReserva(reserva)}>Editar</button>
-                    <button onClick={() => eliminarReserva(reserva.id)}>Eliminar</button>
+                    <button className="btn_admin_editar" onClick={() => handleEditarReserva(reserva)}>Editar</button>
+                    <button className="btn_admin_eliminar" onClick={() => eliminarReserva(reserva.id)}>Eliminar</button>
                   </>
                 )}
               </td>
