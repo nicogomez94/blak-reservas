@@ -16,7 +16,8 @@ db.schema.hasTable("reservas").then((exists) => {
       table.string("fecha");
       // table.string("hora");
       table.string("status");
-      table.string("servicio");
+      table.string("token");
+      table.string("servicio_detalle");
       table.timestamp("created_at").defaultTo(db.fn.now());
     });
   }

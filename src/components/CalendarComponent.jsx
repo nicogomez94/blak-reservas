@@ -1,4 +1,3 @@
-// CalendarComponent.jsx
 import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import axios from "axios";
@@ -7,7 +6,7 @@ import "./CalendarComponent.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const CalendarComponent = ({ servicio }) => {
+const CalendarComponent = ({ onReserve, servicios }) => {
 	const [date, setDate] = useState(new Date());
 	const [reservas, setReservas] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -29,7 +28,7 @@ const CalendarComponent = ({ servicio }) => {
 	const getCuposPorFecha = (fechaISO) => {
 		return reservas.filter((r) => r.fecha === fechaISO).length;
 	};
-    
+
 	const isFechaLlena = (fecha) => {
 		const fechaISO = fecha.toISOString().split("T")[0];
 		return getCuposPorFecha(fechaISO) >= 10;
@@ -45,8 +44,11 @@ const CalendarComponent = ({ servicio }) => {
 		try {
 			setLoading(true);
 			const paymentData = {
-				transaction_amount: servicio.precio,
-				description: `${servicio.label} - Reserva para el día ${fechaISO}`,
+				transaction_amount: 10,
+				description: JSON.stringify({
+					fecha: fechaISO,
+					servicios: servicios
+				}),
 				payer: { email: "test_user_123456@testuser.com" }
 			};
 
@@ -79,9 +81,12 @@ const CalendarComponent = ({ servicio }) => {
 				tileDisabled={({ date }) => isFechaLlena(date)}
 			/>
 
-			<p style={{ marginTop: "20px" }}>Fecha seleccionada: {date.toDateString()}</p>
+			<p style={{ marginTop: "20px" }}>
+				Fecha seleccionada: {date.toDateString()}
+			</p>
+
 			<button onClick={handleReserveClick} disabled={loading}>
-				{loading ? "Redirigiendo al pago..." : `Pagar reserva (${servicio.precio.toLocaleString()} ARS)`}
+				{loading ? "Redirigiendo al pago..." : `Pagar reserva ($5.000 ARS)`}
 			</button>
 		</div>
 	);

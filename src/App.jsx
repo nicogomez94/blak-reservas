@@ -1,19 +1,18 @@
 import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import CalendarComponent from "./components/CalendarComponent";
+import SeleccionServicio from "./components/SeleccionServicio";
 import AdminPanel from "./components/AdminPanel";
 import Success from "./components/Success";
-import SeleccionServicio from "./components/SeleccionServicio";
-
+import Fail from "./components/Fail";
 
 function App() {
 	const [reservedDateTime, setReservedDateTime] = useState(null);
-	const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
+	const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]);
 
-
-	const handleReserve = ({ date, time }) => {
-		setReservedDateTime({ date, time });
-		alert(`Turno reservado para el ${date.toDateString()} a las ${time} hs`);
+	const handleReserve = ({ date }) => {
+		setReservedDateTime({ date });
+		alert(`Turno reservado para el ${date.toDateString()}`);
 	};
 
 	return (
@@ -23,39 +22,15 @@ function App() {
 					path="/"
 					element={
 						<div>
-							<div
-								style={{
-									backgroundImage: "url('https://avatar.setmore.com/files/img/fhwXFmJ3ua0p/7bfb04f3-78f7-4357-b95a-113b0bd61127.jpeg?crop=893%3B300%3B3%3B594&w=768')",
-									backgroundPosition: "center",
-									textAlign: "center",
-									color: "white",
-									borderRadius: "20px"
-								}}
-							>
-								<img
-									src="https://avatar.setmore.com/files/img/fNKfU1EFJAXg/1740366217459.png?w=128&h=128"
-									alt="BLAK logo"
-									className="logo-principal"
+							<h1 className="main_h">Reserva tu turno en BLAK</h1>
+
+							<SeleccionServicio onSeleccionar={setServiciosSeleccionados} />
+
+							{serviciosSeleccionados.length > 0 && (
+								<CalendarComponent
+									onReserve={handleReserve}
+									servicios={serviciosSeleccionados}
 								/>
-							</div>
-							<h1 className="main_h">Reserva tu Turno</h1>
-
-							{!servicioSeleccionado ? (
-								<SeleccionServicio onSeleccionar={setServicioSeleccionado} />
-							) : (
-								<>
-									<CalendarComponent
-										onReserve={handleReserve}
-										servicio={servicioSeleccionado}
-									/>
-
-									<button
-										onClick={() => setServicioSeleccionado(null)}
-										style={{ marginTop: "20px" }}
-									>
-										⬅ Volver a elegir servicio
-									</button>
-								</>
 							)}
 
 							{reservedDateTime && (
@@ -66,7 +41,7 @@ function App() {
 										color: "green"
 									}}
 								>
-									Turno confirmado para el {reservedDateTime.date.toDateString()} a las {reservedDateTime.time} hs
+									Turno confirmado para el {reservedDateTime.date.toDateString()}
 								</p>
 							)}
 						</div>
@@ -74,6 +49,7 @@ function App() {
 				/>
 				<Route path="/admin" element={<AdminPanel />} />
 				<Route path="/success" element={<Success />} />
+				<Route path="/fail" element={<Fail />} />
 			</Routes>
 		</Router>
 	);

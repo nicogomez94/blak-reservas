@@ -4,6 +4,7 @@ import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import db from "./db.js";
 import dotenv from "dotenv";
 import { enviarMailDeConfirmacion } from "./mailer.js";
+import crypto from "crypto";
 
 dotenv.config();
 const API_URL = process.env.VITE_API_URL;
@@ -30,9 +31,9 @@ app.post("/create_preference", async (req, res) => {
         payer: req.body.payer,
         notification_url: `${API_URL}/webhook`,
         back_urls: {
-			success: "http://localhost:5173/success",
-			failure: "http://localhost:5173/",
-			pending: "http://localhost:5173/"
+			  success: "http://localhost:5173/success",
+			  failure: "http://localhost:5173/fail",
+			  pending: "http://localhost:5173/"
 		},
 		auto_return: "approved"
         },
@@ -56,17 +57,22 @@ app.post("/webhook", async (req, res) => {
 			const status = mpPayment.api_response.status;
 
 			if (status == "200") {
-				const description = mpPayment.additional_info?.items?.[0]?.title || "";
-				const match = description.match(/(\d{4}-\d{2}-\d{2})/); // solo buscamos la fecha
-				const partes = description.split(" - ");
-				const servicio = partes[0];
-                // const email = mpPayment.payer?.email || "sin_email@blak.fake";
+				const rawDesc = mpPayment.additional_info?.items?.[0]?.title || "";
 				const email = "nicolasgomez94@gmail.com"; // hardcoded por ahora
+				const token = crypto.randomBytes(16).toString("hex");
 
-				if (match) {
-					const fecha = match[1];
+				let fecha = "";
+				let servicios = [];
 
-					// Verificar cupo máximo (10)
+				try {
+					const parsed = JSON.parse(rawDesc);
+					fecha = parsed.fecha;
+					servicios = parsed.servicios;
+				} catch (err) {
+					console.error("❌ No se pudo parsear la descripción:", rawDesc);
+				}
+
+				if (fecha) {
 					const reservasEnEseDia = await db("reservas").where({ fecha }).count("id as total");
 					const cantidad = reservasEnEseDia[0].total;
 
@@ -75,11 +81,17 @@ app.post("/webhook", async (req, res) => {
 						return res.sendStatus(200);
 					}
 
-					await db("reservas").insert({ fecha, status, servicio });
+					await db("reservas").insert({
+						fecha,
+						status,
+						token,
+						servicio_detalle: JSON.stringify(servicios)
+					});
+
 					await enviarMailDeConfirmacion({ to: email, fecha });
 					console.log(`✅ Reserva guardada para ${fecha}`);
 				} else {
-					console.log("❌ Error al guardar reserva. Falló el match. -->", match);
+					console.log("❌ Fecha no válida, no se guardó la reserva.");
 				}
 			} else {
 				console.log("❌ Error de red -->", status);
@@ -92,11 +104,10 @@ app.post("/webhook", async (req, res) => {
 	res.sendStatus(200);
 });
 
-
-  app.post('/webhook', (req, res) => {
-    console.log('📩 Notificación recibida de Mercado Pago:', req.body);
-    res.sendStatus(200);
-  });
+app.post('/webhook', (req, res) => {
+  console.log('📩 Notificación recibida de Mercado Pago:', req.body);
+  res.sendStatus(200);
+});
 
 //reservas guardadas
 app.get("/reservas", async (req, res) => {
