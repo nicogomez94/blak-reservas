@@ -170,6 +170,19 @@ app.put("/reservas/:id", async (req, res) => {
   }
 });
 
+app.put("/servicios/:id", async (req, res) => {
+  const { id } = req.params;
+  const updatedServicio = req.body;
+
+  try {
+    await db("servicios").where("id", id).update(updatedServicio);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Error al actualizar el servicio:", error);
+    res.status(500).json({ success: false, error: "No se pudo actualizar el servicio." });
+  }
+});
+
 // Iniciar el servidor en el puerto 3001
 app.listen(3001, () => {
   console.log("Servidor corriendo en http://localhost:3001");

@@ -10,6 +10,8 @@ const AdminPanel = () => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [editingReservaId, setEditingReservaId] = useState(null);
   const [editedReserva, setEditedReserva] = useState({});
+  const [editingServicioId, setEditingServicioId] = useState(null);
+  const [editedServicio, setEditedServicio] = useState({});
 
   const fetchReservas = async () => {
     try {
@@ -79,6 +81,50 @@ const AdminPanel = () => {
     setEditedReserva({ ...editedReserva, [name]: value });
   };
 
+  const handleEditarServicio = (servicio) => {
+    setEditingServicioId(servicio.id);
+    setEditedServicio({ ...servicio });
+  };
+
+  const handleCancelarEdicionServicio = () => {
+    setEditingServicioId(null);
+    setEditedServicio({});
+  };
+
+  const handleGuardarCambiosServicio = async () => {
+    try {
+      await axios.put(`${API_URL}/servicios/${editingServicioId}`, editedServicio, {
+        headers: { "ngrok-skip-browser-warning": "true" },
+      });
+
+      // Actualizar la lista de reservas con los cambios
+      setReservas(
+        reservas.map((reserva) => {
+          if (reserva.id === editedServicio.reserva_id) {
+            return {
+              ...reserva,
+              servicios: reserva.servicios.map((servicio) =>
+                servicio.id === editingServicioId ? { ...servicio, ...editedServicio } : servicio
+              ),
+            };
+          }
+          return reserva;
+        })
+      );
+
+      // Resetear el estado de edición
+      setEditingServicioId(null);
+      setEditedServicio({});
+    } catch (error) {
+      console.error("Error al guardar los cambios del servicio:", error);
+    }
+  };
+
+  const handleServicioInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedServicio({ ...editedServicio, [name]: value });
+  };
+
   useEffect(() => {
     if (loggedIn) fetchReservas();
   }, [loggedIn]);
@@ -144,7 +190,23 @@ const AdminPanel = () => {
                   <ul>
                     {reserva.servicios.map((servicio) => (
                       <li key={servicio.id}>
-                        {servicio.nombre} ({servicio.atributo}: {servicio.valor})
+                        {editingServicioId === servicio.id ? (
+                          <>
+                            <input
+                              type="text"
+                              name="valor"
+                              value={editedServicio.valor || ""}
+                              onChange={handleServicioInputChange}
+                            />
+                            <button onClick={handleGuardarCambiosServicio}>Guardar</button>
+                            <button onClick={handleCancelarEdicionServicio}>Cancelar</button>
+                          </>
+                        ) : (
+                          <>
+                            {servicio.nombre} ({servicio.atributo}: {servicio.valor})
+                            <button onClick={() => handleEditarServicio(servicio)}>Editar</button>
+                          </>
+                        )}
                       </li>
                     ))}
                   </ul>
