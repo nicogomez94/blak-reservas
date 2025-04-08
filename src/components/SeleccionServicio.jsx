@@ -37,16 +37,15 @@ const SeleccionServicio = ({ onSeleccionar }) => {
         const tamañoAuto = mapTipoVehiculoATamaño[tipoVehiculo];
         let nuevoTotal = 0;
 
-        seleccionados.forEach(nombreServicio => {
-            const servicio = serviciosDisponibles.find(s => s.nombre === nombreServicio);
+        seleccionados.forEach((nombreServicio) => {
+            const servicio = serviciosDisponibles.find((s) => s.nombre === nombreServicio);
             if (servicio && servicio.precios[tamañoAuto]) {
                 nuevoTotal += servicio.precios[tamañoAuto];
             }
         });
 
         setTotal(nuevoTotal);
-
-    }, [seleccionados, tipoVehiculo]); // Dependencias: se ejecuta si cambia seleccionados o tipoVehiculo
+    }, [seleccionados, tipoVehiculo]);
 
     const toggleServicio = (servicio) => {
         setSeleccionados((prev) => {
@@ -72,16 +71,25 @@ const SeleccionServicio = ({ onSeleccionar }) => {
         setDetalles({});
     }, [tipoVehiculo]);
 
-
     const handleEnviar = () => {
         const tamañoAuto = mapTipoVehiculoATamaño[tipoVehiculo];
         const seleccionFinal = seleccionados.map((nombre) => {
             const base = { nombre };
             const atributos = detalles[nombre] || {};
             const precioIndividual = serviciosDisponibles.find((s) => s.nombre === nombre)?.precios[tamañoAuto] || 0;
-            return { ...base, ...atributos, tamaño: tamañoAuto, precio: precioIndividual }; // Usamos precioIndividual aquí
+            return { ...base, ...atributos, tamaño: tamañoAuto, precio: precioIndividual };
         });
         onSeleccionar({ servicios: seleccionFinal, total });
+    };
+
+    const areAllAttributesSelected = () => {
+        return seleccionados.every((nombre) => {
+            const servicio = serviciosDisponibles.find((s) => s.nombre === nombre);
+            if (!servicio) return false;
+
+            // Verificar que todos los atributos requeridos tengan un valor seleccionado
+            return servicio.atributos.every((attr) => detalles[nombre]?.[attr]);
+        });
     };
 
     return (
@@ -110,7 +118,7 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                                     {s.precios[mapTipoVehiculoATamaño[tipoVehiculo]]}
                                 </label>
 
-                                {seleccionados.includes(s.nombre) && s.atributos.length > 0 && ( // Solo muestra si hay atributos
+                                {seleccionados.includes(s.nombre) && s.atributos.length > 0 && (
                                     <div style={{ marginTop: "5px", marginLeft: "20px" }}>
                                         {s.atributos.map((attr) => (
                                             <div key={attr}>
@@ -138,7 +146,10 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                         ))}
                     </ul>
                     <h3>Total: ${total}</h3>
-                    <button onClick={handleEnviar} disabled={seleccionados.length === 0}> {/* Opcional: deshabilitar si no hay nada */}
+                    <button
+                        onClick={handleEnviar}
+                        disabled={seleccionados.length === 0 || !areAllAttributesSelected()}
+                    >
                         Confirmar selección
                     </button>
                 </>
