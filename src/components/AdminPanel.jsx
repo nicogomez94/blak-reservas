@@ -8,6 +8,8 @@ const API_URL = import.meta.env.VITE_API_URL;
 const AdminPanel = () => {
   const [reservas, setReservas] = useState([]);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [editingReservaId, setEditingReservaId] = useState(null);
+  const [editedReserva, setEditedReserva] = useState({});
 
   const fetchReservas = async () => {
     try {
@@ -40,6 +42,43 @@ const AdminPanel = () => {
       .catch((err) => console.error("Error al eliminar reserva:", err));
   };
 
+  const handleEditarReserva = (reserva) => {
+    setEditingReservaId(reserva.id);
+    setEditedReserva({ ...reserva });
+  };
+
+  const handleCancelarEdicion = () => {
+    setEditingReservaId(null);
+    setEditedReserva({});
+  };
+
+  const handleGuardarCambios = async () => {
+    try {
+      // Crear una copia del objeto editedReserva sin la propiedad servicios
+      const { servicios, ...reservaData } = editedReserva;
+
+      await axios.put(`${API_URL}/reservas/${editingReservaId}`, reservaData, {
+        headers: { "ngrok-skip-browser-warning": "true" },
+      });
+
+      setReservas(
+        reservas.map((reserva) =>
+          reserva.id === editingReservaId ? { ...reserva, ...reservaData, servicios: reserva.servicios } : reserva
+        )
+      );
+
+      setEditingReservaId(null);
+      setEditedReserva({});
+    } catch (error) {
+      console.error("Error al guardar los cambios:", error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedReserva({ ...editedReserva, [name]: value });
+  };
+
   useEffect(() => {
     if (loggedIn) fetchReservas();
   }, [loggedIn]);
@@ -64,9 +103,42 @@ const AdminPanel = () => {
           {reservas.map((reserva) => (
             <tr key={reserva.id}>
               <td>{reserva.id}</td>
-              <td>{reserva.fecha}</td>
-              <td>{reserva.status}</td>
-              <td>{reserva.total}</td>
+              <td>
+                {editingReservaId === reserva.id ? (
+                  <input
+                    type="text"
+                    name="fecha"
+                    value={editedReserva.fecha || ""}
+                    onChange={handleInputChange}
+                  />
+                ) : (
+                  reserva.fecha
+                )}
+              </td>
+              <td>
+                {editingReservaId === reserva.id ? (
+                  <input
+                    type="text"
+                    name="status"
+                    value={editedReserva.status || ""}
+                    onChange={handleInputChange}
+                  />
+                ) : (
+                  reserva.status
+                )}
+              </td>
+              <td>
+                {editingReservaId === reserva.id ? (
+                  <input
+                    type="number"
+                    name="total"
+                    value={editedReserva.total || ""}
+                    onChange={handleInputChange}
+                  />
+                ) : (
+                  reserva.total
+                )}
+              </td>
               <td>
                 {reserva.servicios && reserva.servicios.length > 0 ? (
                   <ul>
@@ -81,7 +153,17 @@ const AdminPanel = () => {
                 )}
               </td>
               <td>
-                <button onClick={() => eliminarReserva(reserva.id)}>Eliminar</button>
+                {editingReservaId === reserva.id ? (
+                  <>
+                    <button onClick={handleGuardarCambios}>Guardar</button>
+                    <button onClick={handleCancelarEdicion}>Cancelar</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => handleEditarReserva(reserva)}>Editar</button>
+                    <button onClick={() => eliminarReserva(reserva.id)}>Eliminar</button>
+                  </>
+                )}
               </td>
             </tr>
           ))}
