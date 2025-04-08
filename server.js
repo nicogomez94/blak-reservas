@@ -146,6 +146,17 @@ app.delete("/reservas/:id", async (req, res) => {
   }
 });
 
+app.get("/servicios/:reservaId", async (req, res) => {
+  const { reservaId } = req.params;
+  try {
+    const servicios = await db("servicios").where({ reserva_id: reservaId });
+    res.json(servicios);
+  } catch (error) {
+    console.error("Error al obtener los servicios:", error);
+    res.status(500).json({ error: "No se pudieron obtener los servicios." });
+  }
+});
+
 // Iniciar el servidor en el puerto 3001
 app.listen(3001, () => {
   console.log("Servidor corriendo en http://localhost:3001");
