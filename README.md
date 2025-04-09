@@ -1,8 +1,8 @@
-# ✨ Blak Reservas - ¡Gestiona tus Turnos Automotrices con Estilo! 🚗
+# ✨ Blak Reservas
 
 ## 📝 Descripción del Proyecto
 
-Blak Reservas es una aplicación web 🚀 diseñada para gestionar reservas de servicios, ¡pensada para el mundo automotriz! 🚘 (ploteo, polarizado, etc.). Permite a los usuarios seleccionar un tipo de vehículo 🚗, elegir servicios 🛠️ y especificar detalles adicionales para cada uno. ¡Y eso no es todo! 🤩 También cuenta con un panel de administración 🛡️ para gestionar las reservas.
+Blak Reservas es una aplicación web 🚀 diseñada para gestionar reservas de servicios. Permite a los usuarios seleccionar un tipo de vehículo 🚗, elegir servicios 🛠️ y especificar detalles adicionales para cada uno. ¡Y eso no es todo! También cuenta con un panel de administración 🛡️ para gestionar las reservas.
 
 ## 🌟 Características Principales
 
