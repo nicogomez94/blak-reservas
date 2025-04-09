@@ -58,57 +58,6 @@ El proyecto está estructurado en los siguientes directorios y archivos principa
 *   CORS
 *   Dotenv
 
-## ⚙️ Configuración e Instalación
-
-1.  **Clonar el repositorio:**
-
-    ```bash
-    git clone <URL_DEL_REPOSITORIO>
-    cd <NOMBRE_DEL_PROYECTO>
-    ```
-
-2.  **Instalar las dependencias del frontend:**
-
-    ```bash
-    npm install
-    ```
-
-3.  **Instalar las dependencias del backend:**
-
-    ```bash
-    cd backend
-    npm install
-    ```
-
-4.  **Configurar las variables de entorno:**
-
-    *   Crear un archivo `.env` en la raíz del proyecto.
-    *   Agregar las siguientes variables de entorno:
-
-        ```
-        VITE_API_URL=<URL_DEL_SERVIDOR_BACKEND>
-        TOKEN_MP=<TOKEN_DE_ACCESO_DE_MERCADO_PAGO>
-        EMAIL_USER=<USUARIO_DE_CORREO_ELECTRONICO>
-        EMAIL_PASS=<CONTRASEÑA_DE_CORREO_ELECTRONICO>
-        ```
-
-5.  **Ejecutar las migraciones de la base de datos:**
-
-    ```bash
-    knex migrate:latest
-    ```
-
-6.  **Ejecutar el servidor backend:**
-
-    ```bash
-    npm run dev
-    ```
-
-7.  **Ejecutar la aplicación frontend:**
-
-    ```bash
-    npm run dev
-    ```
 
 ## 💻 Uso
 
@@ -136,15 +85,3 @@ El proyecto está estructurado en los siguientes directorios y archivos principa
 *   Mejorar la interfaz de usuario y la experiencia del usuario en general.
 *   Implementar pruebas unitarias y de integración.
 *   Documentar el código con JSDoc.
-
-## 🤝 Contribución
-
-¡Las contribuciones son bienvenidas! 🎉 Si deseas contribuir a este proyecto, por favor sigue estos pasos:
-
-1.  Crear un fork del repositorio.
-2.  Crear una rama con la nueva característica o corrección de errores.
-3.  Realizar los cambios y enviar un pull request.
-
-## 📜 Licencia
-
-Este proyecto está licenciado bajo la Licencia MIT.
