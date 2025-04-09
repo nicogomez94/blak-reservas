@@ -1,41 +1,150 @@
-# 🧼 Sistema de Reservas para BLAK
+# ✨ Blak Reservas - ¡Gestiona tus Turnos Automotrices con Estilo! 🚗
 
-Sistema web completo para la gestión de turnos en **BLAK**, un centro de detailing automotriz.  
-Permite a los clientes seleccionar una fecha y horario disponibles, realizar un pago con Mercado Pago, y recibir un correo de confirmación automático.
+## 📝 Descripción del Proyecto
 
----
+Blak Reservas es una aplicación web 🚀 diseñada para gestionar reservas de servicios, ¡pensada para el mundo automotriz! 🚘 (ploteo, polarizado, etc.). Permite a los usuarios seleccionar un tipo de vehículo 🚗, elegir servicios 🛠️ y especificar detalles adicionales para cada uno. ¡Y eso no es todo! 🤩 También cuenta con un panel de administración 🛡️ para gestionar las reservas.
 
-## ✨ Funcionalidades
+## 🌟 Características Principales
 
-- 📅 Calendario interactivo con horarios dinámicos
-- 💳 Integración con Mercado Pago (con webhook y seña obligatoria)
-- 💾 Almacenamiento de reservas en base de datos (SQLite o MySQL)
-- 🔒 Panel de administración protegido por login
-- ❌ Posibilidad de eliminar turnos para liberar horarios
-- 📧 Envío automático de correo de confirmación al cliente
+*   **🎨 Selección de Servicios:**
+    *   Interfaz de usuario intuitiva 🖱️ para seleccionar el tipo de vehículo 🚗 y los servicios deseados.
+    *   Validación de atributos requeridos ✅ antes de confirmar la selección.
+    *   Cálculo dinámico 🧮 del total a pagar según los servicios seleccionados y el tipo de vehículo.
+*   **🛡️ Panel de Administración:**
+    *   Autenticación de administrador 🔑.
+    *   Visualización de todas las reservas 🗓️ con detalles como fecha, estado, total y servicios asociados.
+    *   Edición ✏️ y eliminación 🗑️ de reservas existentes.
+    *   Edición de atributos de servicios asociados a cada reserva.
+*   **💰 Integración con Mercado Pago:**
+    *   Creación de preferencias de pago en Mercado Pago para cada reserva.
+    *   Notificaciones de Mercado Pago a través de webhooks 📡 para actualizar el estado de las reservas.
+    *   Redirección a páginas de éxito 👍 o fallo 👎 según el resultado del pago.
+*   **🗄️ Base de Datos:**
+    *   Utilización de SQLite para almacenar la información de las reservas y los servicios.
+    *   Estructura de base de datos optimizada para la gestión eficiente de las reservas y sus servicios asociados.
+*   **📅 Manejo de Cupos:**
+    *   Validación de cupos diarios para evitar la sobre-reserva de servicios en un mismo día.
+*   **📧 Envío de Emails:**
+    *   Envío de emails de confirmación a los usuarios después de realizar una reserva.
 
----
+## 🗂️ Estructura del Proyecto
 
-## 🧠 Tecnologías utilizadas
+El proyecto está estructurado en los siguientes directorios y archivos principales:
 
-### 🖥️ Frontend
-- React + Vite
-- React Calendar
-- Axios
-- CSS puro
+*   `src/`: Contiene el código fuente de la aplicación.
+    *   `components/`: Contiene los componentes React reutilizables.
+        *   `AdminPanel.jsx`: Componente para el panel de administración.
+        *   `AdminLogin.jsx`: Componente para el inicio de sesión del administrador.
+        *   `SeleccionServicio.jsx`: Componente para la selección de servicios por parte del usuario.
+    *   `App.jsx`: Componente principal de la aplicación.
+    *   `main.jsx`: Punto de entrada de la aplicación React.
+*   `db.js`: Configuración y conexión a la base de datos SQLite.
+*   `server.js`: Servidor Express que maneja las API y la lógica del backend.
+*   `mailer.js`: Configuración y funciones para el envío de emails.
+*   `AdminPanel.css`: Estilos CSS para el componente AdminPanel.
+*   `SeleccionServicio.css`: Estilos CSS para el componente SeleccionServicio.
+*   `package.json`: Archivo de configuración del proyecto Node.js.
+*   `README.md`: Este archivo.
 
-### 🔧 Backend
-- Node.js + Express
-- Knex.js para base de datos
-- Mercado Pago SDK
-- Nodemailer para envío de mails
+## 🛠️ Tecnologías Utilizadas
 
----
+*   React
+*   Express
+*   Knex.js
+*   SQLite
+*   Mercado Pago SDK
+*   Nodemailer
+*   Axios
+*   CORS
+*   Dotenv
 
-## 🚀 Instalación
+## ⚙️ Configuración e Instalación
 
-### Backend
+1.  **Clonar el repositorio:**
 
-```bash
-cd backend
-npm install
+    ```bash
+    git clone <URL_DEL_REPOSITORIO>
+    cd <NOMBRE_DEL_PROYECTO>
+    ```
+
+2.  **Instalar las dependencias del frontend:**
+
+    ```bash
+    npm install
+    ```
+
+3.  **Instalar las dependencias del backend:**
+
+    ```bash
+    cd backend
+    npm install
+    ```
+
+4.  **Configurar las variables de entorno:**
+
+    *   Crear un archivo `.env` en la raíz del proyecto.
+    *   Agregar las siguientes variables de entorno:
+
+        ```
+        VITE_API_URL=<URL_DEL_SERVIDOR_BACKEND>
+        TOKEN_MP=<TOKEN_DE_ACCESO_DE_MERCADO_PAGO>
+        EMAIL_USER=<USUARIO_DE_CORREO_ELECTRONICO>
+        EMAIL_PASS=<CONTRASEÑA_DE_CORREO_ELECTRONICO>
+        ```
+
+5.  **Ejecutar las migraciones de la base de datos:**
+
+    ```bash
+    knex migrate:latest
+    ```
+
+6.  **Ejecutar el servidor backend:**
+
+    ```bash
+    npm run dev
+    ```
+
+7.  **Ejecutar la aplicación frontend:**
+
+    ```bash
+    npm run dev
+    ```
+
+## 💻 Uso
+
+1.  **Acceder a la aplicación:**
+
+    *   Abrir un navegador web 🌐 y acceder a la URL del frontend (por defecto, `http://localhost:5173`).
+
+2.  **Seleccionar servicios:**
+
+    *   Elegir el tipo de vehículo 🚗.
+    *   Seleccionar los servicios deseados 🛠️.
+    *   Completar los detalles adicionales para cada servicio.
+    *   Confirmar la selección y proceder al pago 💰 a través de Mercado Pago.
+
+3.  **Administrar reservas:**
+
+    *   Acceder al panel de administración 🛡️ (ruta protegida, requiere inicio de sesión).
+    *   Visualizar, editar ✏️ y eliminar 🗑️ reservas.
+    *   Gestionar los servicios asociados a cada reserva.
+
+## 🚀 Próximas Mejoras
+
+*   Implementar un sistema de usuarios 🧑‍🤝‍🧑 para que los clientes puedan gestionar sus propias reservas.
+*   Agregar más opciones de personalización para los servicios.
+*   Mejorar la interfaz de usuario y la experiencia del usuario en general.
+*   Implementar pruebas unitarias y de integración.
+*   Documentar el código con JSDoc.
+
+## 🤝 Contribución
+
+¡Las contribuciones son bienvenidas! 🎉 Si deseas contribuir a este proyecto, por favor sigue estos pasos:
+
+1.  Crear un fork del repositorio.
+2.  Crear una rama con la nueva característica o corrección de errores.
+3.  Realizar los cambios y enviar un pull request.
+
+## 📜 Licencia
+
+Este proyecto está licenciado bajo la Licencia MIT.
