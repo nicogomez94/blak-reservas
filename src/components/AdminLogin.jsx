@@ -6,7 +6,7 @@ const AdminLogin = ({ onLogin }) => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
+		if (password === "123") {
 			onLogin();
 		} else {
 			setError("Contraseña incorrecta");
