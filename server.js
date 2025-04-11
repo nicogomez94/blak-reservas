@@ -5,6 +5,8 @@ import db from "./db.js";
 import dotenv from "dotenv";
 import { enviarMailDeConfirmacion } from "./mailer.js";
 import crypto from "crypto";
+import path from "path";
+const __dirname = path.resolve();
 const PORT = process.env.PORT || 3001;
 
 dotenv.config();
@@ -182,6 +184,14 @@ app.put("/servicios/:id", async (req, res) => {
     console.error("Error al actualizar el servicio:", error);
     res.status(500).json({ success: false, error: "No se pudo actualizar el servicio." });
   }
+});
+
+// Servir archivos estáticos del frontend
+app.use(express.static(path.join(__dirname, "dist")));
+
+// Manejar rutas no definidas en el backend
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 //RENDER
