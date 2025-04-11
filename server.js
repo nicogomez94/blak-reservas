@@ -10,7 +10,7 @@ const __dirname = path.resolve();
 const PORT = process.env.PORT || 3001;
 
 dotenv.config();
-const API_URL = process.env.VITE_API_URL;
+const API_URL = "https://blak-reservas-ib2j.onrender.com";
 const app = express();
 
 app.use(cors());
@@ -34,9 +34,9 @@ app.post("/create_preference", async (req, res) => {
         payer: req.body.payer,
         notification_url: `${API_URL}/webhook`,
         back_urls: {
-          success: "http://localhost:5173/success",
-          failure: "http://localhost:5173/fail",
-          pending: "http://localhost:5173/",
+          success: `${API_URL}/success`,
+          failure: `${API_URL}/fail`,
+          pending: `${API_URL}/`,
         },
         auto_return: "approved",
       },
