@@ -185,6 +185,7 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                                     onClick={handleEnviar}
                                     disabled={seleccionados.length === 0 || !areAllAttributesSelected()}
                                     className="confirm-button"
+                                    style={{marginLeft: "0"}}
                                 >
                                     Confirmar selección
                                 </button>

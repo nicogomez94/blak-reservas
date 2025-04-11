@@ -26,8 +26,30 @@ function App() {
                 <Route
                     path="/"
                     element={
-                        <div>
-                            <h1 className="main_h">Reserva tu turno en BLAK</h1>
+                        <div className="main_parent">
+                            <div className="container_main_h">
+                                <div>
+                                    <img className="main_logo_img" src="public/logo.png" alt="Logo Blak" />
+                                    <h1 className="main_h">Reserva tu Turno!</h1>
+                                </div>
+                                <div className="description">
+                                    <p>
+                                        En <strong>BLAK</strong>, ofrecemos servicios de alta calidad para el cuidado y personalización de tu vehículo. 
+                                        Desde ploteos hasta polarizados, garantizamos resultados excepcionales que harán que tu auto luzca como nuevo.
+                                    </p>
+                                    <hr />
+                                    <ul className="benefits-list">
+                                        <li>✔ Atención personalizada</li>
+                                        <li>✔ Materiales de primera calidad</li>
+                                        <li>✔ Resultados garantizados</li>
+                                        <li>✔ Reserva fácil y rápida</li>
+                                    </ul>
+                                    <hr />
+                                    <p style={{ fontWeight: "bold",color: "light-grey" }}>
+                                        ¡Confía en nosotros para darle a tu vehículo el cuidado que se merece!
+                                    </p>
+                                </div>
+                            </div>
 
                             <SeleccionServicio onSeleccionar={handleSeleccionConfirmada} />
 

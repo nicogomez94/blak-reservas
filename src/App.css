@@ -7,16 +7,39 @@ a:link{
   color: var(--blak-verde-oscuro) !important;
 }
 body{
-    background: rgb(61,61,61);
-  	background: radial-gradient(circle, rgba(61,61,61,1) 0%, rgba(0,0,0,1) 100%);
+  background: url(/public/tes.webp);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center;
+  background-color: #000;
+    /* background: rgb(61,61,61);
+  	background: radial-gradient(circle, rgba(61,61,61,1) 0%, rgba(0,0,0,1) 100%); */
 }
 .logo-principal{
 	border-radius: 50%;
 	width: 40%;
 	box-shadow: 0 0 15px rgb(16, 16, 16);
 }
+.container_main_h{
+  background-color: #242424;
+  padding: 2rem;
+  box-shadow: 0 0 15px rgb(16, 16, 16);
+  border-radius: 8px;
+  margin: 0 auto;
+  max-width: 40%;
+}
 .main_h{
-	color: var(--blak-verde) !important;
+	/* color: var(--blak-verde) !important; */
+	color: #00ff88 !important;
+}
+.main_logo_img{
+  max-width: 70%;
+}
+.benefits-list{
+  list-style-type: none;
+  text-align: left;
+  color: #00ff88;
 }
 .portada{
 	height: 200px;
