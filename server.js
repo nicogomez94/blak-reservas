@@ -5,6 +5,7 @@ import db from "./db.js";
 import dotenv from "dotenv";
 import { enviarMailDeConfirmacion } from "./mailer.js";
 import crypto from "crypto";
+const PORT = process.env.PORT || 3001;
 
 dotenv.config();
 const API_URL = process.env.VITE_API_URL;
@@ -183,7 +184,7 @@ app.put("/servicios/:id", async (req, res) => {
   }
 });
 
-// Iniciar el servidor en el puerto 3001
-app.listen(3001, () => {
-  console.log("Servidor corriendo en http://localhost:3001");
+//RENDER
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Servidor corriendo en http://0.0.0.0:${PORT}`);
 });
