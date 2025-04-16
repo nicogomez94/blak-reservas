@@ -27,7 +27,7 @@ function App() {
                     path="/"
                     element={
                         <div className="main_parent">
-                            <div className="container_main_h">
+                            {/* <div className="container_main_h">
                                 <div>
                                     <img className="main_logo_img" src="public/logo.png" alt="Logo Blak" />
                                     <h1 className="main_h">Reserva tu Turno!</h1>
@@ -49,7 +49,7 @@ function App() {
                                         ¡Confía en nosotros para darle a tu vehículo el cuidado que se merece!
                                     </p>
                                 </div>
-                            </div>
+                            </div> */}
 
                             <SeleccionServicio onSeleccionar={handleSeleccionConfirmada} />
 

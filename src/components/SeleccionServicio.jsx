@@ -16,7 +16,12 @@ const opcionesAtributos = {
 };
 
 const serviciosDisponibles = [
-    { nombre: "ploteo", subtipo: "auto", atributos: ["color"], precios: { sml: 1000, med: 1500, lrg: 2000 } },
+    { 
+        nombre: "ploteo", 
+        subtipo: ["auto", "llantas", "caliper", "chrome delete", "insignia", "parrilla"], 
+        atributos: ["color"], 
+        precios: { sml: 1000, med: 1500, lrg: 2000 } 
+    },
     { nombre: "polarizado", atributos: ["tono", "tipo"], precios: { sml: 800, med: 1200, lrg: 1600 } },
     { nombre: "abrillantado", atributos: [], precios: { sml: 500, med: 700, lrg: 900 } },
     { nombre: "trompa ppf", atributos: [], precios: { sml: 2000, med: 2500, lrg: 3000 } },
@@ -91,6 +96,16 @@ const SeleccionServicio = ({ onSeleccionar }) => {
         }));
     };
 
+    const handleChangeSubtipo = (servicio, subtipo) => {
+        setDetalles((prev) => ({
+            ...prev,
+            [servicio]: {
+                ...prev[servicio],
+                subtipo,
+            },
+        }));
+    };
+
     const handleVerDetalles = (nombreServicio) => {
         setServicioEnEdicion(nombreServicio);
         setCurrentView('DETALLES_SERVICIO');
@@ -118,13 +133,17 @@ const SeleccionServicio = ({ onSeleccionar }) => {
         onSeleccionar({ servicios: seleccionFinal, total });
     };
 
-     const areAllAttributesSelected = () => {
-         return seleccionados.every((nombre) => {
-             const servicio = serviciosDisponibles.find((s) => s.nombre === nombre);
-             if (!servicio || servicio.atributos.length === 0) return true;
-             return servicio.atributos.every((attr) => detalles[nombre]?.[attr]);
-         });
-     };
+    const areAllAttributesSelected = () => {
+        return seleccionados.every((nombre) => {
+            const servicio = serviciosDisponibles.find((s) => s.nombre === nombre);
+            if (!servicio) return true;
+
+            const atributosCompletos = servicio.atributos.every((attr) => detalles[nombre]?.[attr]);
+            const subtipoCompleto = !servicio.subtipo || detalles[nombre]?.subtipo;
+
+            return atributosCompletos && subtipoCompleto;
+        });
+    };
 
     return (
         <div className="seleccion-servicio-container">
@@ -162,7 +181,10 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                                                     onChange={() => toggleServicio(s.nombre)}
                                                 />
                                                 <div className="service-info">
-                                                    <span>{s.nombre} {s.subtipo && `(${s.subtipo})`}</span>
+                                                    <span>
+                                                        {s.nombre} 
+                                                        {detalles[s.nombre]?.subtipo && ` (${detalles[s.nombre].subtipo})`}
+                                                    </span>
                                                     <span className="service-price">${precio}</span>
                                                 </div>
                                             </label>
@@ -194,7 +216,7 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                     )}
                 </div>
 
-                 <div className="step step-DETALLES_SERVICIO">
+                <div className="step step-DETALLES_SERVICIO">
                     {servicioEnEdicion && (() => {
                         const servicioActual = serviciosDisponibles.find(s => s.nombre === servicioEnEdicion);
                         if (!servicioActual) return null;
@@ -204,6 +226,26 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                                 <button onClick={handleVolverALista} className="back-button">← Volver a Servicios</button>
                                 <h2>Detalles para: {servicioActual.nombre}</h2>
                                 <div className="attribute-list">
+                                    {servicioActual.subtipo && (
+                                        <div className="attribute-item">
+                                            <label>
+                                                Subtipo:
+                                                <select
+                                                    value={detalles[servicioActual.nombre]?.subtipo || ""}
+                                                    onChange={(e) =>
+                                                        handleChangeSubtipo(servicioActual.nombre, e.target.value)
+                                                    }
+                                                >
+                                                    <option value="">-- Seleccionar --</option>
+                                                    {servicioActual.subtipo.map((op) => (
+                                                        <option key={op} value={op}>
+                                                            {op}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </label>
+                                        </div>
+                                    )}
                                     {servicioActual.atributos.map((attr) => (
                                         <div key={attr} className="attribute-item">
                                             <label>
@@ -229,7 +271,7 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                             </>
                         );
                     })()}
-                 </div>
+                </div>
 
             </div>
         </div>
