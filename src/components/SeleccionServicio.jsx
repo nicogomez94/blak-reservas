@@ -280,16 +280,29 @@ const SeleccionServicio = ({ onSeleccionar }) => {
         
         // Si es selección de detalle
         if (currentView === 'DETALLE_ATRIBUTO') {
-            const tamaño = tiposVehiculo.find(t => t.id === tipoVehiculo)?.tamaño;
             const opcion = item;
+            
+            // Pasar al nuevo paso de confirmación con la opción seleccionada
+            navigateTo('CONFIRMACION_DETALLE', {
+                servicio: seleccionActual.servicio,
+                categoria: seleccionActual.categoria,
+                atributo: seleccionActual.atributo,
+                opcion: opcion
+            });
+            return;
+        }
+        
+        // Nuevo paso: Confirmación de detalle
+        if (currentView === 'CONFIRMACION_DETALLE') {
+            const tamaño = tiposVehiculo.find(t => t.id === tipoVehiculo)?.tamaño;
             
             const nuevaSeleccion = {
                 id: `${seleccionActual.servicio.nombre}-${seleccionActual.categoria.nombre}`,
                 servicio: seleccionActual.servicio.nombre,
                 categoria: seleccionActual.categoria.nombre,
                 atributo: seleccionActual.atributo.nombre,
-                detalle: opcion.nombre,
-                descripcion: opcion.descripcion,
+                detalle: seleccionActual.opcion.nombre,
+                descripcion: seleccionActual.opcion.descripcion,
                 precio: seleccionActual.categoria.precios[tamaño] || 0,
                 tamaño: tamaño
             };
@@ -478,9 +491,88 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                     )}
                 </div>
 
+                {/* Nuevo paso: Confirmación de Detalles */}
+                <div className="step step-CONFIRMACION_DETALLE">
+                    {seleccionActual?.opcion && (
+                        <>
+                            <button 
+                                onClick={() => navigateTo('DETALLE_ATRIBUTO', { 
+                                    servicio: seleccionActual.servicio, 
+                                    categoria: seleccionActual.categoria,
+                                    atributo: seleccionActual.atributo
+                                })} 
+                                className="back-button"
+                            >
+                                ← Volver a Opciones
+                            </button>
+                            <h2>Confirmar selección</h2>
+                            
+                            <div className="confirmation-details">
+                                <div className="selection-preview">
+                                    {/* Aquí puedes añadir una imagen basada en la selección */}
+                                    <div className="preview-image">
+                                        {/* Imagen representativa del color/opción seleccionado */}
+                                        <div 
+                                            className="color-sample" 
+                                            style={{ 
+                                                backgroundColor: getColorCode(seleccionActual.opcion.nombre),
+                                                width: '100%',
+                                                height: '160px',
+                                                borderRadius: '8px'
+                                            }}
+                                        />
+                                    </div>
+                                    
+                                    <div className="selected-details">
+                                        <h3>{seleccionActual.servicio.nombre} - {seleccionActual.categoria.nombre}</h3>
+                                        <p>
+                                            <strong>{seleccionActual.atributo.nombre}:</strong> {seleccionActual.opcion.nombre}
+                                        </p>
+                                        <p className="detail-description">{seleccionActual.opcion.descripcion}</p>
+                                        
+                                        <p className="price-detail">
+                                            <strong>Precio:</strong> $
+                                            {seleccionActual.categoria.precios[
+                                                tiposVehiculo.find(t => t.id === tipoVehiculo)?.tamaño
+                                            ] || 0}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    className="add-button"
+                                    onClick={() => handleSelection({})}
+                                >
+                                    Agregar a mi selección
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+
             </div>
         </div>
     );
+};
+
+// Función auxiliar para obtener un código de color basado en el nombre
+// Esto es solo un ejemplo, puedes ampliarlo o usar imágenes reales
+const getColorCode = (colorName) => {
+    const colorMap = {
+        'rojo': '#FF3B30',
+        'azul': '#007AFF',
+        'negro': '#1D1D1D',
+        'negro brillante': '#2C2C2C',
+        'blanco': '#F8F8F8',
+        'gris grafito': '#636366',
+        'dorado': '#D4AF37',
+        'amarillo': '#FFCC00',
+        'claro': '#E0E0E0',
+        'intermedio': '#A0A0A0',
+        'oscuro': '#505050'
+    };
+    
+    return colorMap[colorName.toLowerCase()] || '#CCCCCC';
 };
 
 export default SeleccionServicio;

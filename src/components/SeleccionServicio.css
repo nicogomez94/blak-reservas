@@ -26,7 +26,8 @@
 .view-LISTA_SERVICIOS .step-LISTA_SERVICIOS,
 .view-CATEGORIA_SERVICIOS .step-CATEGORIA_SERVICIOS,
 .view-ATRIBUTO_CATEGORIA .step-ATRIBUTO_CATEGORIA,
-.view-DETALLE_ATRIBUTO .step-DETALLE_ATRIBUTO {
+.view-DETALLE_ATRIBUTO .step-DETALLE_ATRIBUTO,
+.view-CONFIRMACION_DETALLE .step-CONFIRMACION_DETALLE {
   display: block;
 }
 
@@ -208,6 +209,68 @@
   padding: 15px;
 }
 
+/* Nuevo paso de confirmación */
+.view-CONFIRMACION_DETALLE .step-CONFIRMACION_DETALLE {
+  display: block;
+}
+
+.confirmation-details {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.selection-preview {
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.preview-image {
+  margin-bottom: 20px;
+}
+
+.selected-details h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-transform: capitalize;
+}
+
+.detail-description {
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.price-detail {
+  font-size: 18px;
+  margin-top: 15px;
+}
+
+.add-button {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+  align-self: center;
+  width: 100%;
+  max-width: 250px;
+}
+
+.add-button:hover {
+  background-color: #0b5ed7;
+}
+
 /* Responsive design */
 @media (max-width: 600px) {
   .step {
@@ -225,5 +288,22 @@
 
   .selected-item-price {
     margin: 5px 0 0;
+  }
+}
+
+/* Media queries para responsividad */
+@media (min-width: 768px) {
+  .selection-preview {
+    flex-direction: row;
+  }
+  
+  .preview-image {
+    width: 40%;
+    margin-right: 20px;
+    margin-bottom: 0;
+  }
+  
+  .selected-details {
+    width: 60%;
   }
 }
