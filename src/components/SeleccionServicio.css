@@ -4,7 +4,7 @@
   margin: 0 auto;
   padding: 20px;
   font-family: 'Arial', sans-serif;
-  color: black !important
+  color: black !important;
 }
 
 .steps-wrapper {
@@ -27,6 +27,9 @@
 .view-CATEGORIA_SERVICIOS .step-CATEGORIA_SERVICIOS,
 .view-ATRIBUTO_CATEGORIA .step-ATRIBUTO_CATEGORIA,
 .view-DETALLE_ATRIBUTO .step-DETALLE_ATRIBUTO,
+.view-DETALLE_COLOR .step-DETALLE_COLOR,
+.view-CONFIRMACION_COLOR .step-CONFIRMACION_COLOR,
+.view-CONFIRMACION_SIMPLE .step-CONFIRMACION_SIMPLE,
 .view-CONFIRMACION_DETALLE .step-CONFIRMACION_DETALLE {
   display: block;
 }
@@ -83,6 +86,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: calc(100% - 40px);
 }
 
 .item-description {
@@ -209,11 +213,20 @@
   padding: 15px;
 }
 
-/* Nuevo paso de confirmación */
-.view-CONFIRMACION_DETALLE .step-CONFIRMACION_DETALLE {
-  display: block;
+/* Estilos para la vista de colores */
+.color-preview {
+  min-width: 30px;
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.detail-list .selection-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Estilos para confirmación de detalles */
 .confirmation-details {
   margin-top: 20px;
   display: flex;
@@ -271,24 +284,9 @@
   background-color: #0b5ed7;
 }
 
-/* Responsive design */
-@media (max-width: 600px) {
-  .step {
-    padding: 15px;
-  }
-  
-  .selection-item {
-    padding: 12px;
-  }
-
-  .selected-item-details {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .selected-item-price {
-    margin: 5px 0 0;
-  }
+/* Estilos para servicios simples */
+.step-CONFIRMACION_SIMPLE .selection-preview {
+  padding: 25px;
 }
 
 /* Media queries para responsividad */
@@ -305,5 +303,24 @@
   
   .selected-details {
     width: 60%;
+  }
+}
+
+@media (max-width: 600px) {
+  .step {
+    padding: 15px;
+  }
+  
+  .selection-item {
+    padding: 12px;
+  }
+
+  .selected-item-details {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .selected-item-price {
+    margin: 5px 0 0;
   }
 }

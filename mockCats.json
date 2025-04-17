@@ -1,0 +1,170 @@
+[
+    {
+        nombre: "ploteo",
+        categorias: [
+            {
+                nombre: "auto",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "rojo", descripcion: "Color rojo brillante" },
+                            { nombre: "azul", descripcion: "Color azul intenso" },
+                            { nombre: "negro", descripcion: "Color negro mate" },
+                            { nombre: "blanco", descripcion: "Color blanco perla" },
+                            { nombre: "gris grafito", descripcion: "Color gris con acabado mate" },
+                        ]
+                    }
+                ],
+                precios: { sml: 1000, med: 1500, lrg: 2000 }
+            },
+            {
+                nombre: "llantas",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "negro", descripcion: "Color negro mate" },
+                            { nombre: "gris grafito", descripcion: "Color gris con acabado mate" },
+                            { nombre: "dorado", descripcion: "Color dorado metálico" }
+                        ]
+                    }
+                ],
+                precios: { sml: 300, med: 400, lrg: 500 }
+            },
+            {
+                nombre: "caliper",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "rojo", descripcion: "Color rojo brillante" },
+                            { nombre: "azul", descripcion: "Color azul intenso" },
+                            { nombre: "amarillo", descripcion: "Color amarillo intenso" }
+                        ]
+                    }
+                ],
+                precios: { sml: 250, med: 300, lrg: 350 }
+            },
+            {
+                nombre: "chrome delete",
+                atributos: [],
+                precios: { sml: 400, med: 500, lrg: 600 }
+            },
+            {
+                nombre: "insignia",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "negro", descripcion: "Color negro mate" },
+                            { nombre: "negro brillante", descripcion: "Color negro con acabado brillante" }
+                        ]
+                    }
+                ],
+                precios: { sml: 150, med: 150, lrg: 150 }
+            },
+            {
+                nombre: "parrilla",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "negro", descripcion: "Color negro mate" },
+                            { nombre: "negro brillante", descripcion: "Color negro con acabado brillante" }
+                        ]
+                    }
+                ],
+                precios: { sml: 300, med: 400, lrg: 500 }
+            }
+        ]
+    },
+    {
+        nombre: "polarizado",
+        categorias: [
+            {
+                nombre: "estándar",
+                atributos: [
+                    {
+                        nombre: "tono",
+                        opciones: [
+                            { nombre: "claro", descripcion: "Tono claro, permite mayor paso de luz" },
+                            { nombre: "intermedio", descripcion: "Tono medio, equilibrado" },
+                            { nombre: "oscuro", descripcion: "Tono oscuro, máxima privacidad" }
+                        ]
+                    }
+                ],
+                precios: { sml: 800, med: 1200, lrg: 1600 }
+            },
+            {
+                nombre: "antivandalico",
+                atributos: [
+                    {
+                        nombre: "tono",
+                        opciones: [
+                            { nombre: "claro", descripcion: "Tono claro, permite mayor paso de luz" },
+                            { nombre: "intermedio", descripcion: "Tono medio, equilibrado" },
+                            { nombre: "oscuro", descripcion: "Tono oscuro, máxima privacidad" }
+                        ]
+                    }
+                ],
+                precios: { sml: 1200, med: 1600, lrg: 2000 }
+            }
+        ]
+    },
+    {
+        nombre: "abrillantado",
+        categorias: [
+            {
+                nombre: "completo",
+                atributos: [],
+                precios: { sml: 500, med: 700, lrg: 900 }
+            }
+        ]
+    },
+    {
+        nombre: "trompa ppf",
+        categorias: [
+            {
+                nombre: "estándar",
+                atributos: [],
+                precios: { sml: 2000, med: 2500, lrg: 3000 }
+            }
+        ]
+    },
+    {
+        nombre: "negro simil_vidrio",
+        categorias: [
+            {
+                nombre: "ppf",
+                atributos: [
+                    {
+                        nombre: "zona",
+                        opciones: [
+                            { nombre: "techo", descripcion: "Aplicación en techo del vehículo" },
+                            { nombre: "aleron", descripcion: "Aplicación en alerón" },
+                            { nombre: "parantes", descripcion: "Aplicación en parantes" },
+                            { nombre: "espejos", descripcion: "Aplicación en espejos laterales" }
+                        ]
+                    }
+                ],
+                precios: { sml: 1500, med: 2000, lrg: 2500 }
+            },
+            {
+                nombre: "vinilo",
+                atributos: [
+                    {
+                        nombre: "zona",
+                        opciones: [
+                            { nombre: "techo", descripcion: "Aplicación en techo del vehículo" },
+                            { nombre: "aleron", descripcion: "Aplicación en alerón" },
+                            { nombre: "parantes", descripcion: "Aplicación en parantes" },
+                            { nombre: "espejos", descripcion: "Aplicación en espejos laterales" }
+                        ]
+                    }
+                ],
+                precios: { sml: 1200, med: 1700, lrg: 2200 }
+            }
+        ]
+    }
+];
