@@ -1,147 +1,325 @@
 import { useState, useEffect } from "react";
 import "./SeleccionServicio.css";
 
-const mapTipoVehiculoATamaño = {
-    chico: "sml",
-    mediano: "med",
-    grande: "lrg"
-};
-
-const opcionesAtributos = {
-    color: ["rojo", "azul", "negro", "blanco", "gris"],
-    tono: ["claro", "intermedio", "oscuro"],
-    tipo: ["estándar", "antivandalico"],
-    subtipo: ["ppf", "vinilo"],
-    zona: ["techo", "aleron", "parantes", "espejos"]
-};
-
+// Nueva estructura de datos jerárquica
 const serviciosDisponibles = [
-    { 
-        nombre: "ploteo", 
-        subtipo: ["auto", "llantas", "caliper", "chrome delete", "insignia", "parrilla"], 
-        atributos: ["color"], 
-        precios: { sml: 1000, med: 1500, lrg: 2000 } 
+    {
+        nombre: "ploteo",
+        categorias: [
+            {
+                nombre: "auto",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "rojo", descripcion: "Color rojo brillante" },
+                            { nombre: "azul", descripcion: "Color azul intenso" },
+                            { nombre: "negro", descripcion: "Color negro mate" },
+                            { nombre: "blanco", descripcion: "Color blanco perla" },
+                            { nombre: "gris grafito", descripcion: "Color gris con acabado mate" },
+                        ]
+                    }
+                ],
+                precios: { sml: 1000, med: 1500, lrg: 2000 }
+            },
+            {
+                nombre: "llantas",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "negro", descripcion: "Color negro mate" },
+                            { nombre: "gris grafito", descripcion: "Color gris con acabado mate" },
+                            { nombre: "dorado", descripcion: "Color dorado metálico" }
+                        ]
+                    }
+                ],
+                precios: { sml: 300, med: 400, lrg: 500 }
+            },
+            {
+                nombre: "caliper",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "rojo", descripcion: "Color rojo brillante" },
+                            { nombre: "azul", descripcion: "Color azul intenso" },
+                            { nombre: "amarillo", descripcion: "Color amarillo intenso" }
+                        ]
+                    }
+                ],
+                precios: { sml: 250, med: 300, lrg: 350 }
+            },
+            {
+                nombre: "chrome delete",
+                atributos: [],
+                precios: { sml: 400, med: 500, lrg: 600 }
+            },
+            {
+                nombre: "insignia",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "negro", descripcion: "Color negro mate" },
+                            { nombre: "negro brillante", descripcion: "Color negro con acabado brillante" }
+                        ]
+                    }
+                ],
+                precios: { sml: 150, med: 150, lrg: 150 }
+            },
+            {
+                nombre: "parrilla",
+                atributos: [
+                    {
+                        nombre: "color",
+                        opciones: [
+                            { nombre: "negro", descripcion: "Color negro mate" },
+                            { nombre: "negro brillante", descripcion: "Color negro con acabado brillante" }
+                        ]
+                    }
+                ],
+                precios: { sml: 300, med: 400, lrg: 500 }
+            }
+        ]
     },
-    { nombre: "polarizado", atributos: ["tono", "tipo"], precios: { sml: 800, med: 1200, lrg: 1600 } },
-    { nombre: "abrillantado", atributos: [], precios: { sml: 500, med: 700, lrg: 900 } },
-    { nombre: "trompa ppf", atributos: [], precios: { sml: 2000, med: 2500, lrg: 3000 } },
-    { nombre: "negro simil_vidrio", atributos: ["subtipo", "zona"], precios: { sml: 1500, med: 2000, lrg: 2500 } },
+    {
+        nombre: "polarizado",
+        categorias: [
+            {
+                nombre: "estándar",
+                atributos: [
+                    {
+                        nombre: "tono",
+                        opciones: [
+                            { nombre: "claro", descripcion: "Tono claro, permite mayor paso de luz" },
+                            { nombre: "intermedio", descripcion: "Tono medio, equilibrado" },
+                            { nombre: "oscuro", descripcion: "Tono oscuro, máxima privacidad" }
+                        ]
+                    }
+                ],
+                precios: { sml: 800, med: 1200, lrg: 1600 }
+            },
+            {
+                nombre: "antivandalico",
+                atributos: [
+                    {
+                        nombre: "tono",
+                        opciones: [
+                            { nombre: "claro", descripcion: "Tono claro, permite mayor paso de luz" },
+                            { nombre: "intermedio", descripcion: "Tono medio, equilibrado" },
+                            { nombre: "oscuro", descripcion: "Tono oscuro, máxima privacidad" }
+                        ]
+                    }
+                ],
+                precios: { sml: 1200, med: 1600, lrg: 2000 }
+            }
+        ]
+    },
+    {
+        nombre: "abrillantado",
+        categorias: [
+            {
+                nombre: "completo",
+                atributos: [],
+                precios: { sml: 500, med: 700, lrg: 900 }
+            }
+        ]
+    },
+    {
+        nombre: "trompa ppf",
+        categorias: [
+            {
+                nombre: "estándar",
+                atributos: [],
+                precios: { sml: 2000, med: 2500, lrg: 3000 }
+            }
+        ]
+    },
+    {
+        nombre: "negro simil_vidrio",
+        categorias: [
+            {
+                nombre: "ppf",
+                atributos: [
+                    {
+                        nombre: "zona",
+                        opciones: [
+                            { nombre: "techo", descripcion: "Aplicación en techo del vehículo" },
+                            { nombre: "aleron", descripcion: "Aplicación en alerón" },
+                            { nombre: "parantes", descripcion: "Aplicación en parantes" },
+                            { nombre: "espejos", descripcion: "Aplicación en espejos laterales" }
+                        ]
+                    }
+                ],
+                precios: { sml: 1500, med: 2000, lrg: 2500 }
+            },
+            {
+                nombre: "vinilo",
+                atributos: [
+                    {
+                        nombre: "zona",
+                        opciones: [
+                            { nombre: "techo", descripcion: "Aplicación en techo del vehículo" },
+                            { nombre: "aleron", descripcion: "Aplicación en alerón" },
+                            { nombre: "parantes", descripcion: "Aplicación en parantes" },
+                            { nombre: "espejos", descripcion: "Aplicación en espejos laterales" }
+                        ]
+                    }
+                ],
+                precios: { sml: 1200, med: 1700, lrg: 2200 }
+            }
+        ]
+    }
+];
+
+const tiposVehiculo = [
+    { id: "chico", nombre: "Auto compacto", tamaño: "sml" },
+    { id: "mediano", nombre: "Sedán / Mini SUV", tamaño: "med" },
+    { id: "grande", nombre: "SUV / Pickup", tamaño: "lrg" }
 ];
 
 const SeleccionServicio = ({ onSeleccionar }) => {
     const [tipoVehiculo, setTipoVehiculo] = useState("");
-    const [seleccionados, setSeleccionados] = useState([]);
-    const [detalles, setDetalles] = useState({});
-    const [total, setTotal] = useState(0);
     const [currentView, setCurrentView] = useState('TIPO_VEHICULO');
-    const [servicioEnEdicion, setServicioEnEdicion] = useState(null);
+    const [seleccionActual, setSeleccionActual] = useState(null);
+    const [seleccionados, setSeleccionados] = useState([]);
+    const [total, setTotal] = useState(0);
 
+    // Actualiza el total cuando cambia la selección
     useEffect(() => {
         if (!tipoVehiculo) {
             setTotal(0);
             return;
         }
-        const tamañoAuto = mapTipoVehiculoATamaño[tipoVehiculo];
+        
+        const tamaño = tiposVehiculo.find(t => t.id === tipoVehiculo)?.tamaño;
+        if (!tamaño) return;
+        
         let nuevoTotal = 0;
-        seleccionados.forEach((nombreServicio) => {
-            const servicio = serviciosDisponibles.find((s) => s.nombre === nombreServicio);
-            if (servicio && servicio.precios[tamañoAuto]) {
-                nuevoTotal += servicio.precios[tamañoAuto];
-            }
+        seleccionados.forEach(item => {
+            nuevoTotal += item.precio;
         });
+        
         setTotal(nuevoTotal);
     }, [seleccionados, tipoVehiculo]);
 
-    const handleTipoVehiculoChange = (e) => {
-        const nuevoTipo = e.target.value;
-        setTipoVehiculo(nuevoTipo);
-        if (nuevoTipo) {
-            setCurrentView('LISTA_SERVICIOS');
-        } else {
-            setCurrentView('TIPO_VEHICULO');
+    // Maneja la navegación entre vistas
+    const navigateTo = (view, selection = null) => {
+        setCurrentView(view);
+        setSeleccionActual(selection);
+    };
+
+    // Maneja la selección de un item
+    const handleSelection = (item) => {
+        const newSelection = {...seleccionActual, ...item};
+        
+        // Si es selección de vehículo
+        if (currentView === 'TIPO_VEHICULO') {
+            setTipoVehiculo(item.id);
+            // Limpia selecciones anteriores al cambiar de vehículo
             setSeleccionados([]);
-            setDetalles({});
+            navigateTo('LISTA_SERVICIOS');
+            return;
+        }
+        
+        // Si es selección de servicio
+        if (currentView === 'LISTA_SERVICIOS') {
+            navigateTo('CATEGORIA_SERVICIOS', { servicio: item });
+            return;
+        }
+        
+        // Si es selección de categoría
+        if (currentView === 'CATEGORIA_SERVICIOS') {
+            const tamaño = tiposVehiculo.find(t => t.id === tipoVehiculo)?.tamaño;
+            const categoria = item;
+            const servicio = seleccionActual.servicio;
+            
+            // Si la categoría no tiene atributos, agregar directamente a seleccionados
+            if (!categoria.atributos || categoria.atributos.length === 0) {
+                const nuevaSeleccion = {
+                    id: `${servicio.nombre}-${categoria.nombre}`,
+                    servicio: servicio.nombre,
+                    categoria: categoria.nombre,
+                    precio: categoria.precios[tamaño] || 0,
+                    tamaño: tamaño
+                };
+                
+                // Verifica si ya existe para reemplazarlo
+                const existeIndex = seleccionados.findIndex(s => s.id === nuevaSeleccion.id);
+                if (existeIndex >= 0) {
+                    const nuevosSeleccionados = [...seleccionados];
+                    nuevosSeleccionados[existeIndex] = nuevaSeleccion;
+                    setSeleccionados(nuevosSeleccionados);
+                } else {
+                    setSeleccionados([...seleccionados, nuevaSeleccion]);
+                }
+                
+                navigateTo('LISTA_SERVICIOS');
+                return;
+            }
+            
+            // Si tiene atributos, navegar a la selección de atributos
+            navigateTo('ATRIBUTO_CATEGORIA', { 
+                servicio: seleccionActual.servicio, 
+                categoria: categoria 
+            });
+            return;
+        }
+        
+        // Si es selección de atributo
+        if (currentView === 'ATRIBUTO_CATEGORIA') {
+            const atributo = seleccionActual.categoria.atributos[0];
+            navigateTo('DETALLE_ATRIBUTO', {
+                servicio: seleccionActual.servicio,
+                categoria: seleccionActual.categoria,
+                atributo: atributo
+            });
+            return;
+        }
+        
+        // Si es selección de detalle
+        if (currentView === 'DETALLE_ATRIBUTO') {
+            const tamaño = tiposVehiculo.find(t => t.id === tipoVehiculo)?.tamaño;
+            const opcion = item;
+            
+            const nuevaSeleccion = {
+                id: `${seleccionActual.servicio.nombre}-${seleccionActual.categoria.nombre}`,
+                servicio: seleccionActual.servicio.nombre,
+                categoria: seleccionActual.categoria.nombre,
+                atributo: seleccionActual.atributo.nombre,
+                detalle: opcion.nombre,
+                descripcion: opcion.descripcion,
+                precio: seleccionActual.categoria.precios[tamaño] || 0,
+                tamaño: tamaño
+            };
+            
+            // Verifica si ya existe para reemplazarlo
+            const existeIndex = seleccionados.findIndex(s => s.id === nuevaSeleccion.id);
+            if (existeIndex >= 0) {
+                const nuevosSeleccionados = [...seleccionados];
+                nuevosSeleccionados[existeIndex] = nuevaSeleccion;
+                setSeleccionados(nuevosSeleccionados);
+            } else {
+                setSeleccionados([...seleccionados, nuevaSeleccion]);
+            }
+            
+            navigateTo('LISTA_SERVICIOS');
+            return;
         }
     };
 
-    const toggleServicio = (nombreServicio) => {
-        setSeleccionados((prev) => {
-            const isSelected = prev.includes(nombreServicio);
-            let newSeleccionados;
-            if (isSelected) {
-                newSeleccionados = prev.filter((s) => s !== nombreServicio);
-                setDetalles(prevDetalles => {
-                    const updatedDetalles = {...prevDetalles};
-                    delete updatedDetalles[nombreServicio];
-                    return updatedDetalles;
-                });
-                 if(servicioEnEdicion === nombreServicio) {
-                    setServicioEnEdicion(null);
-                    setCurrentView('LISTA_SERVICIOS');
-                }
-            } else {
-                newSeleccionados = [...prev, nombreServicio];
-            }
-            return newSeleccionados;
-        });
+    // Elimina un item de los seleccionados
+    const handleRemoveItem = (itemId) => {
+        setSeleccionados(seleccionados.filter(item => item.id !== itemId));
     };
 
-    const handleChangeAtributo = (servicio, atributo, valor) => {
-        setDetalles((prev) => ({
-            ...prev,
-            [servicio]: {
-                ...prev[servicio],
-                [atributo]: valor,
-            },
-        }));
-    };
-
-    const handleChangeSubtipo = (servicio, subtipo) => {
-        setDetalles((prev) => ({
-            ...prev,
-            [servicio]: {
-                ...prev[servicio],
-                subtipo,
-            },
-        }));
-    };
-
-    const handleVerDetalles = (nombreServicio) => {
-        setServicioEnEdicion(nombreServicio);
-        setCurrentView('DETALLES_SERVICIO');
-    };
-
-    const handleVolverALista = () => {
-        setServicioEnEdicion(null);
-        setCurrentView('LISTA_SERVICIOS');
-    };
-
-    useEffect(() => {
-        setSeleccionados([]);
-        setDetalles({});
-        setServicioEnEdicion(null);
-    }, [tipoVehiculo]);
-
-    const handleEnviar = () => {
-        const tamañoAuto = mapTipoVehiculoATamaño[tipoVehiculo];
-        const seleccionFinal = seleccionados.map((nombre) => {
-            const base = { nombre };
-            const atributos = detalles[nombre] || {};
-            const precioIndividual = serviciosDisponibles.find((s) => s.nombre === nombre)?.precios[tamañoAuto] || 0;
-            return { ...base, ...atributos, tamaño: tamañoAuto, precio: precioIndividual };
-        });
-        onSeleccionar({ servicios: seleccionFinal, total });
-    };
-
-    const areAllAttributesSelected = () => {
-        return seleccionados.every((nombre) => {
-            const servicio = serviciosDisponibles.find((s) => s.nombre === nombre);
-            if (!servicio) return true;
-
-            const atributosCompletos = servicio.atributos.every((attr) => detalles[nombre]?.[attr]);
-            const subtipoCompleto = !servicio.subtipo || detalles[nombre]?.subtipo;
-
-            return atributosCompletos && subtipoCompleto;
+    // Envía la selección final
+    const handleConfirmar = () => {
+        onSeleccionar({ 
+            servicios: seleccionados, 
+            total,
+            tipoVehiculo: tiposVehiculo.find(t => t.id === tipoVehiculo)
         });
     };
 
@@ -149,128 +327,155 @@ const SeleccionServicio = ({ onSeleccionar }) => {
         <div className="seleccion-servicio-container">
             <div className={`steps-wrapper view-${currentView}`}>
 
+                {/* Vista Tipo de Vehículo */}
                 <div className="step step-TIPO_VEHICULO">
                     <h2>1. Elegí tu tipo de vehículo</h2>
-                    <select value={tipoVehiculo} onChange={handleTipoVehiculoChange}>
-                        <option value="">-- Seleccioná --</option>
-                        <option value="chico">Auto compacto</option>
-                        <option value="mediano">Sedán / Mini SUV</option>
-                        <option value="grande">SUV / Pickup</option>
-                    </select>
+                    <ul className="selection-list vehicle-list">
+                        {tiposVehiculo.map((vehiculo) => (
+                            <li 
+                                key={vehiculo.id}
+                                className={`selection-item ${tipoVehiculo === vehiculo.id ? 'selected' : ''}`}
+                                onClick={() => handleSelection(vehiculo)}
+                            >
+                                <span className="item-name">{vehiculo.nombre}</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
 
+                {/* Vista Lista de Servicios */}
                 <div className="step step-LISTA_SERVICIOS">
                     {tipoVehiculo && (
                         <>
-                            <button onClick={() => setCurrentView('TIPO_VEHICULO')} className="back-button">← Cambiar Vehículo</button>
+                            <button onClick={() => navigateTo('TIPO_VEHICULO')} className="back-button">← Cambiar Vehículo</button>
                             <h2>2. Seleccioná los servicios</h2>
-                            <ul className="service-list">
-                                {serviciosDisponibles.map((s) => {
-                                    const isSelected = seleccionados.includes(s.nombre);
-                                    const hasAttributes = s.atributos.length > 0;
-                                    const tamañoKey = mapTipoVehiculoATamaño[tipoVehiculo];
-                                    const precio = s.precios[tamañoKey] || 0;
-                                    const atributosCompletos = !hasAttributes || (detalles[s.nombre] && s.atributos.every(attr => detalles[s.nombre]?.[attr]));
-
-                                    return (
-                                        <li key={s.nombre} className={`service-item ${isSelected ? 'selected' : ''}`}>
-                                            <label className="service-label">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => toggleServicio(s.nombre)}
-                                                />
-                                                <div className="service-info">
-                                                    <span>
-                                                        {s.nombre} 
-                                                        {detalles[s.nombre]?.subtipo && ` (${detalles[s.nombre].subtipo})`}
-                                                    </span>
-                                                    <span className="service-price">${precio}</span>
-                                                </div>
-                                            </label>
-                                            {isSelected && hasAttributes && (
-                                                <button
-                                                    onClick={() => handleVerDetalles(s.nombre)}
-                                                    className={`details-button ${!atributosCompletos ? 'incomplete' : ''}`}
-                                                    title={!atributosCompletos ? "Completar detalles" : "Ver/Editar detalles"}
-                                                >
-                                                    {atributosCompletos ? 'Editar Detalles' : 'Completar Detalles'}
-                                                </button>
-                                            )}
-                                        </li>
-                                    );
-                                })}
+                            <ul className="selection-list service-list">
+                                {serviciosDisponibles.map((servicio) => (
+                                    <li 
+                                        key={servicio.nombre}
+                                        className="selection-item"
+                                        onClick={() => handleSelection(servicio)}
+                                    >
+                                        <span className="item-name">{servicio.nombre}</span>
+                                        <span className="item-arrow">→</span>
+                                    </li>
+                                ))}
                             </ul>
+                            
+                            {/* Resumen de selecciones */}
+                            {seleccionados.length > 0 && (
+                                <div className="selections-summary">
+                                    <h3>Servicios seleccionados:</h3>
+                                    <ul className="selected-items">
+                                        {seleccionados.map((item) => (
+                                            <li key={item.id} className="selected-item">
+                                                <div className="selected-item-details">
+                                                    <div className="selected-item-name">
+                                                        <strong>{item.servicio}</strong> - {item.categoria}
+                                                        {item.detalle && `: ${item.detalle}`}
+                                                    </div>
+                                                    <span className="selected-item-price">${item.precio}</span>
+                                                </div>
+                                                <button 
+                                                    className="remove-item" 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRemoveItem(item.id);
+                                                    }}
+                                                >
+                                                    ×
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            
                             <div className="total-section">
                                 <h3>Total: ${total}</h3>
                                 <button
-                                    onClick={handleEnviar}
-                                    disabled={seleccionados.length === 0 || !areAllAttributesSelected()}
+                                    onClick={handleConfirmar}
+                                    disabled={seleccionados.length === 0}
                                     className="confirm-button"
-                                    style={{marginLeft: "0"}}
                                 >
                                     Confirmar selección
                                 </button>
-                             </div>
+                            </div>
                         </>
                     )}
                 </div>
 
-                <div className="step step-DETALLES_SERVICIO">
-                    {servicioEnEdicion && (() => {
-                        const servicioActual = serviciosDisponibles.find(s => s.nombre === servicioEnEdicion);
-                        if (!servicioActual) return null;
+                {/* Vista Categorías de Servicios */}
+                <div className="step step-CATEGORIA_SERVICIOS">
+                    {seleccionActual?.servicio && (
+                        <>
+                            <button onClick={() => navigateTo('LISTA_SERVICIOS')} className="back-button">← Volver a Servicios</button>
+                            <h2>Categorías de {seleccionActual.servicio.nombre}</h2>
+                            <ul className="selection-list category-list">
+                                {seleccionActual.servicio.categorias.map((categoria) => (
+                                    <li 
+                                        key={categoria.nombre}
+                                        className="selection-item"
+                                        onClick={() => handleSelection(categoria)}
+                                    >
+                                        <span className="item-name">{categoria.nombre}</span>
+                                        <span className="item-price">
+                                            ${categoria.precios[tiposVehiculo.find(t => t.id === tipoVehiculo)?.tamaño] || 0}
+                                        </span>
+                                        {categoria.atributos && categoria.atributos.length > 0 && (
+                                            <span className="item-arrow">→</span>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+                </div>
 
-                        return (
-                            <>
-                                <button onClick={handleVolverALista} className="back-button">← Volver a Servicios</button>
-                                <h2>Detalles para: {servicioActual.nombre}</h2>
-                                <div className="attribute-list">
-                                    {servicioActual.subtipo && (
-                                        <div className="attribute-item">
-                                            <label>
-                                                Subtipo:
-                                                <select
-                                                    value={detalles[servicioActual.nombre]?.subtipo || ""}
-                                                    onChange={(e) =>
-                                                        handleChangeSubtipo(servicioActual.nombre, e.target.value)
-                                                    }
-                                                >
-                                                    <option value="">-- Seleccionar --</option>
-                                                    {servicioActual.subtipo.map((op) => (
-                                                        <option key={op} value={op}>
-                                                            {op}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
+                {/* Vista Atributos de Categoría */}
+                <div className="step step-ATRIBUTO_CATEGORIA">
+                    {seleccionActual?.categoria && (
+                        <>
+                            <button onClick={() => navigateTo('CATEGORIA_SERVICIOS', { servicio: seleccionActual.servicio })} className="back-button">← Volver a Categorías</button>
+                            <h2>Atributos para {seleccionActual.categoria.nombre}</h2>
+                            <ul className="selection-list attribute-list">
+                                {seleccionActual.categoria.atributos.map((atributo) => (
+                                    <li 
+                                        key={atributo.nombre}
+                                        className="selection-item"
+                                        onClick={() => handleSelection(atributo)}
+                                    >
+                                        <span className="item-name">{atributo.nombre}</span>
+                                        <span className="item-arrow">→</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+                </div>
+
+                {/* Vista Detalles de Atributo */}
+                <div className="step step-DETALLE_ATRIBUTO">
+                    {seleccionActual?.atributo && (
+                        <>
+                            <button onClick={() => navigateTo('ATRIBUTO_CATEGORIA', { servicio: seleccionActual.servicio, categoria: seleccionActual.categoria })} className="back-button">← Volver a Atributos</button>
+                            <h2>Opciones para {seleccionActual.atributo.nombre}</h2>
+                            <ul className="selection-list detail-list">
+                                {seleccionActual.atributo.opciones.map((opcion) => (
+                                    <li 
+                                        key={opcion.nombre}
+                                        className="selection-item"
+                                        onClick={() => handleSelection(opcion)}
+                                    >
+                                        <div className="option-details">
+                                            <span className="item-name">{opcion.nombre}</span>
+                                            <span className="item-description">{opcion.descripcion}</span>
                                         </div>
-                                    )}
-                                    {servicioActual.atributos.map((attr) => (
-                                        <div key={attr} className="attribute-item">
-                                            <label>
-                                                {attr}:
-                                                <select
-                                                    value={detalles[servicioActual.nombre]?.[attr] || ""}
-                                                    onChange={(e) =>
-                                                        handleChangeAtributo(servicioActual.nombre, attr, e.target.value)
-                                                    }
-                                                >
-                                                    <option value="">-- Seleccionar --</option>
-                                                    {(opcionesAtributos[attr] || []).map((op) => (
-                                                        <option key={op} value={op}>
-                                                            {op}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button onClick={handleVolverALista} className="done-button">Listo</button>
-                            </>
-                        );
-                    })()}
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
                 </div>
 
             </div>
