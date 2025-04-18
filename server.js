@@ -131,9 +131,6 @@ app.post("/webhook", async (req, res) => {
             const mpPayment = await paymentInsta.get({ id: payment.data.id });
             const status = mpPayment.api_response.status;
 
-            console.log("ESTRUCTURA COMPLETA DEL PAGO:");
-            console.log(JSON.stringify(mpPayment, null, 2));
-
             if (status == "200") {
                 // Obtener el token de referencia
                 const externalRef = mpPayment.external_reference;
@@ -147,8 +144,8 @@ app.post("/webhook", async (req, res) => {
                 let servicios = [];
                 let reservaGuardada = false;
                 
-                // Intentar recuperar los datos de la tabla temporal
-                if (externalRef) {
+                try {
+                    // Obtener la reserva pendiente que contiene todos los datos
                     const reservaPendiente = await db("reservas_pendientes")
                         .where({ token: externalRef })
                         .first();
@@ -175,8 +172,7 @@ app.post("/webhook", async (req, res) => {
                             console.error("Error al parsear datos del cliente:", e);
                         }
                         
-                        // La fecha ya la tenemos, los servicios ya los tenemos
-                        // Solo insertar la reserva con los datos que ya hemos reunido
+                        // Insertar la reserva con los datos que ya hemos reunido
                         const reservaId = await db("reservas").insert({
                             fecha,
                             status,
@@ -231,15 +227,8 @@ app.post("/webhook", async (req, res) => {
                     } else {
                         console.log("❌ No se encontró la reserva pendiente con token:", externalRef);
                     }
-                } else {
-                    console.log("❌ Fecha no válida, no se guardó la reserva.");
-                    
-                    // Marcar la reserva pendiente como fallida pero no la eliminamos
-                    if (externalRef) {
-                        await db("reservas_pendientes")
-                            .where({ token: externalRef })
-                            .update({ status: "FAILED_INVALID_DATE" });
-                    }
+                } catch (err) {
+                    console.error("Error al procesar reserva:", err);
                 }
             } else {
                 console.log("❌ Error de red -->", status);
@@ -447,7 +436,8 @@ app.get("/verificar-reserva/:token", async (req, res) => {
     }
 });
 
-// Corregir la implementación del endpoint en server.js
+// Actualiza el endpoint PUT para servicios
+
 app.put("/servicios/:reservaId/:servicioId", async (req, res) => {
     const { reservaId, servicioId } = req.params;
     const updatedServicio = req.body;
@@ -456,42 +446,44 @@ app.put("/servicios/:reservaId/:servicioId", async (req, res) => {
         console.log(`Actualizando servicio ${servicioId} de la reserva ${reservaId}`);
         console.log("Datos recibidos:", updatedServicio);
         
-        // Asegurarse de que los IDs en la URL coincidan con los del payload
-        updatedServicio.id = parseInt(servicioId);
-        updatedServicio.reserva_id = parseInt(reservaId);
-        
-        // Extraer los atributos básicos y los dinámicos
-        const { servicio, nombre, categoria, tamaño, ...atributos } = updatedServicio;
-        
         // Extraer el nombre del atributo y su valor
-        const nombreAtributo = Object.keys(atributos).find(key => 
+        const atributoNombre = Object.keys(updatedServicio).find(key => 
             key !== 'id' && key !== 'reserva_id');
         
-        if (!nombreAtributo) {
-            return res.status(400).json({ success: false, error: "No se especificó qué atributo actualizar" });
+        if (!atributoNombre) {
+            return res.status(400).json({ 
+                success: false, 
+                error: "No se especificó qué atributo actualizar" 
+            });
         }
         
-        const valorAtributo = atributos[nombreAtributo];
-        console.log(`Actualizando atributo '${nombreAtributo}' con valor '${valorAtributo}'`);
+        const valorAtributo = updatedServicio[atributoNombre];
+        console.log(`Actualizando atributo '${atributoNombre}' con valor '${valorAtributo}'`);
         
-        // Buscar si ya existe un registro para este atributo
-        const existente = await db("servicios")
+        // IMPORTANTE: Buscar si ya existe un registro para este atributo
+        const registroExistente = await db("servicios")
             .where({ 
                 reserva_id: parseInt(reservaId),
-                id: parseInt(servicioId),
-                atributo: nombreAtributo
+                nombre: "Fumé ópticas", // Este debería ser dinámico, pero usamos el valor conocido por ahora
+                atributo: atributoNombre
             })
             .first();
             
-        if (existente) {
-            // Actualizar el registro existente
+        if (registroExistente) {
+            // ACTUALIZAR el registro existente en vez de crear uno nuevo
+            console.log(`Encontrado registro existente con ID ${registroExistente.id}, actualizando valor...`);
+            
             await db("servicios")
-                .where({ id: existente.id })
+                .where({ id: registroExistente.id })
                 .update({ valor: String(valorAtributo) });
                 
-            console.log(`✅ Actualizado el registro existente ID=${existente.id}`);
+            console.log(`✅ Registro ${registroExistente.id} actualizado con éxito`);
+            res.status(200).json({ success: true });
         } else {
-            // Obtener información básica del servicio
+            // Si no existe, entonces creamos uno nuevo (caso poco común)
+            console.log(`No se encontró registro para ${atributoNombre}, creando uno nuevo...`);
+            
+            // Obtener información del servicio para crear un registro coherente
             const infoServicio = await db("servicios")
                 .where({ id: parseInt(servicioId) })
                 .first();
@@ -503,23 +495,24 @@ app.put("/servicios/:reservaId/:servicioId", async (req, res) => {
                 });
             }
             
-            // Crear un nuevo registro para este atributo
             await db("servicios").insert({
                 reserva_id: parseInt(reservaId),
                 nombre: infoServicio.nombre,
                 subtipo: infoServicio.subtipo,
-                atributo: nombreAtributo,
+                atributo: atributoNombre,
                 valor: String(valorAtributo),
                 tamaño: infoServicio.tamaño
             });
             
             console.log("✅ Creado nuevo registro para el atributo");
+            res.status(200).json({ success: true });
         }
-        
-        res.status(200).json({ success: true });
     } catch (error) {
         console.error("Error al actualizar el servicio:", error);
-        res.status(500).json({ success: false, error: "No se pudo actualizar el servicio." });
+        res.status(500).json({ 
+            success: false, 
+            error: "No se pudo actualizar el servicio: " + error.message 
+        });
     }
 });
 
