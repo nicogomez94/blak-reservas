@@ -1,0 +1,135 @@
+.success-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+}
+
+.success-container h1 {
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Estado: Loading */
+.loading-spinner {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #3498db;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Estado: Success */
+.success-message {
+    background-color: #ecf9ee;
+    border-left: 4px solid #28a745;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.success-message p {
+    margin: 0.5rem 0;
+    color: #1e7e34;
+}
+
+/* Estado: Error */
+.error-message {
+    background-color: #fdf2f2;
+    border-left: 4px solid #dc3545;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.error-message p {
+    margin: 0.5rem 0;
+    color: #c82333;
+}
+
+/* Estado: Pending */
+.pending-message {
+    background-color: #fff8e1;
+    border-left: 4px solid #ffc107;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.pending-message p {
+    margin: 0.5rem 0;
+    color: #d39e00;
+}
+
+/* Botones */
+.buttons {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.home-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.home-button:hover {
+    background-color: #0069d9;
+}
+
+/* Efectos para el estado de éxito */
+.success-container h1:where(:has(+ p + .success-message)) {
+    color: #28a745;
+    animation: successPulse 1.5s ease-in-out;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(0.95);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Mensaje principal */
+.success-container > p {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .success-container {
+        max-width: 90%;
+        padding: 1.5rem;
+    }
+}

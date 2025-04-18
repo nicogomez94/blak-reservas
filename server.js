@@ -68,7 +68,8 @@ app.post("/create_preference", async (req, res) => {
                     },
                 ],
                 back_urls: {
-                    success: "http://localhost:5173/success",
+                    // Añadir el token a la URL de éxito para verificación posterior
+                    success: `http://localhost:5173/success?token=${reservaToken}`,
                     failure: "http://localhost:5173/fail",
                     pending: "http://localhost:5173/pending"
                 },
@@ -100,7 +101,8 @@ app.post("/create_preference", async (req, res) => {
 
         res.status(200).json({
             id: response.id,
-            init_point: response.init_point
+            init_point: response.init_point,
+            token: reservaToken // Devolvemos el token para uso en el frontend
         });
     } catch (error) {
         console.error("Error al crear preferencia:", error);
@@ -135,6 +137,7 @@ app.post("/webhook", async (req, res) => {
                 
                 let fecha = "";
                 let servicios = [];
+                let reservaGuardada = false;
                 
                 // Intentar recuperar los datos de la tabla temporal
                 if (externalRef) {
@@ -186,6 +189,14 @@ app.post("/webhook", async (req, res) => {
                         console.warn(
                             `❌ Día ${fecha} ya tiene el cupo completo. No se guarda la reserva.`
                         );
+                        
+                        // Marcar la reserva pendiente como fallida pero no la eliminamos
+                        if (externalRef) {
+                            await db("reservas_pendientes")
+                                .where({ token: externalRef })
+                                .update({ status: "FAILED_QUOTA_EXCEEDED" });
+                        }
+                        
                         return res.sendStatus(200);
                     }
 
@@ -225,15 +236,27 @@ app.post("/webhook", async (req, res) => {
                         }
                     }
 
+                    // Marcar que la reserva se guardó exitosamente
+                    reservaGuardada = true;
+                    
                     // Limpiar la reserva pendiente si existe
                     if (externalRef) {
-                        await db("reservas_pendientes").where({ token: externalRef }).delete();
+                        await db("reservas_pendientes")
+                            .where({ token: externalRef })
+                            .delete();
                     }
 
                     await enviarMailDeConfirmacion({ to: email, fecha });
                     console.log(`✅ Reserva guardada para ${fecha}`);
                 } else {
                     console.log("❌ Fecha no válida, no se guardó la reserva.");
+                    
+                    // Marcar la reserva pendiente como fallida pero no la eliminamos
+                    if (externalRef) {
+                        await db("reservas_pendientes")
+                            .where({ token: externalRef })
+                            .update({ status: "FAILED_INVALID_DATE" });
+                    }
                 }
             } else {
                 console.log("❌ Error de red -->", status);
@@ -373,6 +396,71 @@ app.put("/servicios/:id", async (req, res) => {
     } catch (error) {
         console.error("Error al actualizar el servicio:", error);
         res.status(500).json({ success: false, error: "No se pudo actualizar el servicio." });
+    }
+});
+
+// Nuevo endpoint para verificar el estado de la reserva después del pago
+app.get("/verificar-reserva/:token", async (req, res) => {
+    const { token } = req.params;
+    
+    try {
+        // Verificar si existe en reservas (éxito)
+        const reservaExitosa = await db("reservas")
+            .where({ token })
+            .first();
+        
+        if (reservaExitosa) {
+            return res.json({
+                status: "success",
+                message: "Reserva confirmada exitosamente",
+                reserva: {
+                    id: reservaExitosa.id,
+                    fecha: reservaExitosa.fecha
+                }
+            });
+        }
+        
+        // Verificar si existe en reservas_pendientes (pendiente o fallida)
+        const reservaPendiente = await db("reservas_pendientes")
+            .where({ token })
+            .first();
+            
+        if (reservaPendiente) {
+            // Si tiene un status de error
+            if (reservaPendiente.status && reservaPendiente.status.startsWith("FAILED_")) {
+                let mensaje = "No se pudo completar la reserva";
+                
+                if (reservaPendiente.status === "FAILED_QUOTA_EXCEEDED") {
+                    mensaje = "Lo sentimos, el cupo para ese día ya está completo";
+                } else if (reservaPendiente.status === "FAILED_INVALID_DATE") {
+                    mensaje = "La fecha seleccionada no es válida";
+                }
+                
+                return res.json({
+                    status: "error",
+                    message: mensaje,
+                    error: reservaPendiente.status
+                });
+            }
+            
+            // Si está pendiente (sin status o con status diferente a error)
+            return res.json({
+                status: "pending",
+                message: "El pago se ha realizado pero la reserva está pendiente de confirmación"
+            });
+        }
+        
+        // No se encontró ninguna reserva con ese token
+        return res.json({
+            status: "error",
+            message: "No se encontró ninguna reserva con ese token"
+        });
+    } catch (error) {
+        console.error("Error al verificar reserva:", error);
+        res.status(500).json({
+            status: "error",
+            message: "Error al verificar el estado de la reserva"
+        });
     }
 });
 

@@ -46,6 +46,7 @@ db.schema.hasTable("reservas_pendientes").then((exists) => {
       table.string("fecha");
       table.text("servicios");  // Para guardar JSON
       table.decimal("monto", 10, 2);
+      table.string("status").nullable(); // Nuevo campo para status (null, FAILED_QUOTA_EXCEEDED, etc)
       table.timestamp("created_at").defaultTo(db.fn.now());
     });
   }
