@@ -332,7 +332,9 @@ const AdminPanel = () => {
       <h2>Panel de Administración</h2>
       
       <div className="admin-header">
-        <h3>Reservas ({reservas.length})</h3>
+        <h3>
+          Reservas {searchTerm ? `(${sortedReservas.length} de ${reservas.length})` : `(${reservas.length})`}
+        </h3>
         <button className="btn-refresh" onClick={fetchReservas}>
           Actualizar Datos
         </button>
@@ -573,9 +575,13 @@ const AdminPanel = () => {
             </React.Fragment>
           ))}
           
-          {reservas.length === 0 && (
+          {sortedReservas.length === 0 && (
             <tr>
-              <td colSpan="7">No hay reservas registradas.</td>
+              <td colSpan="7" className="no-results">
+                {reservas.length === 0 
+                  ? "No hay reservas registradas." 
+                  : "No se encontraron resultados para tu búsqueda."}
+              </td>
             </tr>
           )}
         </tbody>
