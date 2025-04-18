@@ -37,4 +37,18 @@ db.schema.hasTable("servicios").then((exists) => {
   }
 });
 
+// Añadir después de las otras definiciones de tablas
+db.schema.hasTable("reservas_pendientes").then((exists) => {
+  if (!exists) {
+    return db.schema.createTable("reservas_pendientes", (table) => {
+      table.increments("id").primary();
+      table.string("token").unique();
+      table.string("fecha");
+      table.text("servicios");  // Para guardar JSON
+      table.decimal("monto", 10, 2);
+      table.timestamp("created_at").defaultTo(db.fn.now());
+    });
+  }
+});
+
 export default db;

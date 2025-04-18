@@ -10,6 +10,7 @@ const CalendarComponent = ({ onReserve, servicios }) => {
     const [date, setDate] = useState(new Date());
     const [reservas, setReservas] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchReservas = async () => {
@@ -34,9 +35,8 @@ const CalendarComponent = ({ onReserve, servicios }) => {
         return getCuposPorFecha(fechaISO) >= 10;
     };
 
-    // Calcular el monto total basado en los servicios seleccionados
     const calcularMontoTotal = () => {
-        if (!servicios || servicios.length === 0) return 5000; // Monto por defecto
+        if (!servicios || servicios.length === 0) return 5000;
         return servicios.reduce((total, servicio) => total + (servicio.precio || 0), 0);
     };
 
@@ -49,8 +49,8 @@ const CalendarComponent = ({ onReserve, servicios }) => {
 
         try {
             setLoading(true);
+            setError(null);
             
-            // Simplificamos el objeto de servicios para asegurarnos de enviar solo lo necesario
             const serviciosSimplificados = servicios.map(s => ({
                 servicio: s.servicio || s.nombre,
                 categoria: s.categoria || null,
@@ -63,9 +63,7 @@ const CalendarComponent = ({ onReserve, servicios }) => {
             }));
             
             const montoTotal = calcularMontoTotal();
-            console.log(`Monto total a pagar: ${montoTotal}`);
             
-            // Crear objeto de preferencia
             const paymentData = {
                 transaction_amount: montoTotal,
                 description: JSON.stringify({
@@ -82,34 +80,22 @@ const CalendarComponent = ({ onReserve, servicios }) => {
                 }
             };
 
-            console.log("Enviando datos de pago:", paymentData);
-
-            // Usamos axios en lugar de fetch para mejor manejo de errores
             const response = await axios.post(
                 `${API_URL}/create_preference`, 
-                paymentData,
-                { headers: { 'Content-Type': 'application/json' } }
+                paymentData
             );
 
-            // Verificamos la respuesta correctamente
-            console.log("Respuesta completa:", response.data);
-            
             if (response.data && response.data.init_point) {
-                // Redirigimos al checkout de MercadoPago
-                window.location.href = response.data.init_point;
+                window.open(response.data.init_point, '_blank');
             } else {
-                console.error("Respuesta incompleta de MercadoPago:", response.data);
-                alert("Hubo un problema al conectar con el sistema de pagos. Por favor intenta nuevamente.");
+                throw new Error("No se recibió la URL de pago");
             }
         } catch (error) {
             console.error("Error al iniciar el pago:", error);
+            setError("Hubo un error al procesar tu pago. Por favor, intenta nuevamente.");
             
-            // Mostrar mensaje de error más detallado
             if (error.response) {
-                console.error("Datos del error:", error.response.data);
-                alert(`Error: ${error.response.data.error || "Error en el servidor"}`);
-            } else {
-                alert("No se pudo conectar con el servidor de pagos. Verifica tu conexión.");
+                console.error("Detalles del error:", error.response.data);
             }
         } finally {
             setLoading(false);
@@ -127,11 +113,21 @@ const CalendarComponent = ({ onReserve, servicios }) => {
             />
 
             <p style={{ marginTop: "20px" }}>
-                Fecha seleccionada: {date.toDateString()}
+                Fecha seleccionada: {date.toLocaleDateString()}
             </p>
 
-            <button onClick={handleReserveClick} disabled={loading}>
-                {loading ? "Redirigiendo al pago..." : `Pagar reserva ($${calcularMontoTotal().toLocaleString()} ARS)`}
+            {error && (
+                <div className="error-message" style={{ color: 'red', marginTop: '10px' }}>
+                    {error}
+                </div>
+            )}
+
+            <button 
+                onClick={handleReserveClick} 
+                disabled={loading}
+                className={loading ? "loading-button" : ""}
+            >
+                {loading ? "Procesando..." : `Pagar reserva ($${calcularMontoTotal().toLocaleString()} ARS)`}
             </button>
         </div>
     );

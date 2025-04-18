@@ -16,50 +16,100 @@ app.use(express.json());
 const client = new MercadoPagoConfig({ accessToken: process.env.TOKEN_MP });
 
 app.post("/create_preference", async (req, res) => {
-    const preference = new Preference(client);
-
     try {
-        // Asegúrate de que req.body.description sea una cadena, no un objeto
-        let description = req.body.description;
-        if (typeof description === 'object') {
-            description = JSON.stringify(description);
+        const preference = new Preference(client);
+
+        const { description, transaction_amount, payer } = req.body;
+        
+        // Log para depuración
+        console.log("Recibido en create_preference:", {
+            description: description.substring(0, 100) + "...", 
+            transaction_amount,
+            payer
+        });
+
+        let title = "Reserva Blak";
+        let fecha = "";
+        let serviciosData = [];
+        
+        // Generar token único para esta reserva
+        const reservaToken = crypto.randomBytes(16).toString("hex");
+        
+        try {
+            if (typeof description === 'string') {
+                const parsed = JSON.parse(description);
+                fecha = parsed.fecha;
+                title = `Reserva Blak para ${fecha}`;
+                serviciosData = parsed.servicios || [];
+                
+                // Guardar temporalmente los detalles de la reserva pendiente
+                await db("reservas_pendientes").insert({
+                    token: reservaToken,
+                    fecha,
+                    servicios: JSON.stringify(serviciosData),
+                    monto: transaction_amount,
+                    created_at: new Date()
+                });
+            }
+        } catch (err) {
+            console.error("Error al parsear description:", err);
         }
 
+        // Crear la preferencia con datos validados
         const preferenceData = {
             body: {
                 items: [
                     {
-                        id: 'RESERVA',
-                        title: description,
+                        id: "RESERVA",
+                        title: title,
                         quantity: 1,
-                        unit_price: Number(req.body.transaction_amount),
-                        currency_id: 'ARS'
+                        unit_price: Number(transaction_amount),
+                        currency_id: "ARS"
                     },
                 ],
-                payer: req.body.payer,
-                notification_url: `${API_URL}/webhook`,
                 back_urls: {
                     success: "http://localhost:5173/success",
                     failure: "http://localhost:5173/fail",
-                    pending: "http://localhost:5173/",
+                    pending: "http://localhost:5173/pending"
                 },
+                notification_url: `${API_URL}/webhook`,
                 auto_return: "approved",
-                statement_descriptor: "Blak Reservas",
-                external_reference: crypto.randomBytes(16).toString("hex")
+                statement_descriptor: "Blak Detailing",
+                expires: true,
+                expiration_date_to: new Date(Date.now() + 3600000).toISOString(),
+                external_reference: reservaToken // Usamos el token como referencia externa
             },
         };
 
-        console.log("Enviando preferencia a MP:", JSON.stringify(preferenceData, null, 2));
-        
-        const response = await preference.create(preferenceData);
-        console.log("Respuesta de MP:", response.init_point);
+        if (payer && payer.email) {
+            preferenceData.body.payer = {
+                email: payer.email,
+                name: payer.name || "Cliente",
+                identification: payer.identification || { type: "DNI", number: "00000000" }
+            };
+        }
 
-        res.status(200).json({ init_point: response.init_point });
+        console.log("Enviando preferencia a MercadoPago:", JSON.stringify(preferenceData, null, 2));
+        const response = await preference.create(preferenceData);
+        
+        console.log("Respuesta de MercadoPago:", {
+            id: response.id,
+            init_point: response.init_point,
+            token: reservaToken
+        });
+
+        res.status(200).json({
+            id: response.id,
+            init_point: response.init_point
+        });
     } catch (error) {
         console.error("Error al crear preferencia:", error);
-        res.status(400).json({
-            error: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        console.error("Detalles adicionales:", error.cause || error.message);
+        
+        res.status(500).json({
+            error: "Error al crear preferencia de pago",
+            message: error.message,
+            details: process.env.NODE_ENV === "development" ? error.stack : undefined
         });
     }
 });
@@ -75,19 +125,55 @@ app.post("/webhook", async (req, res) => {
             const status = mpPayment.api_response.status;
 
             if (status == "200") {
-                const rawDesc = mpPayment.additional_info?.items?.[0]?.title || "";
-                const email = "nicolasgomez94@gmail.com"; // hardcoded por ahora
-                const token = crypto.randomBytes(16).toString("hex");
-
+                // Obtener el token de referencia
+                const externalRef = mpPayment.external_reference;
+                
+                // Si no hay referencia, intentamos extraer la fecha del título como fallback
+                const rawTitle = mpPayment.additional_info?.items?.[0]?.title || "";
+                const email = "nicolasgomez94@gmail.com";
+                const token = externalRef || crypto.randomBytes(16).toString("hex");
+                
                 let fecha = "";
                 let servicios = [];
-
-                try {
-                    const parsed = JSON.parse(rawDesc);
-                    fecha = parsed.fecha;
-                    servicios = parsed.servicios;
-                } catch (err) {
-                    console.error("❌ No se pudo parsear la descripción:", rawDesc);
+                
+                // Intentar recuperar los datos de la tabla temporal
+                if (externalRef) {
+                    const reservaPendiente = await db("reservas_pendientes")
+                        .where({ token: externalRef })
+                        .first();
+                    
+                    if (reservaPendiente) {
+                        fecha = reservaPendiente.fecha;
+                        try {
+                            servicios = JSON.parse(reservaPendiente.servicios);
+                            console.log("✅ Servicios recuperados de reserva pendiente:", servicios.map(s => s.servicio).join(", "));
+                        } catch (e) {
+                            console.error("Error al parsear servicios de reserva pendiente:", e);
+                        }
+                    } else {
+                        console.log("❌ No se encontró la reserva pendiente con token:", externalRef);
+                    }
+                }
+                
+                // Fallback: extraer la fecha del título
+                if (!fecha) {
+                    const fechaMatch = rawTitle.match(/para (\d{4}-\d{2}-\d{2})/);
+                    if (fechaMatch && fechaMatch[1]) {
+                        fecha = fechaMatch[1];
+                    }
+                }
+                
+                // Fallback para servicios si no se pudieron recuperar
+                if (!servicios || servicios.length === 0) {
+                    const monto = mpPayment.transaction_amount || 0;
+                    console.log("❌ No se pudieron recuperar servicios, usando genérico");
+                    servicios = [{
+                        servicio: "Reserva de servicio",
+                        precio: monto,
+                        tipo: "simple",
+                        descripcion: `Reserva para ${fecha}`,
+                        tamaño: "med"
+                    }];
                 }
 
                 if (fecha) {
@@ -111,7 +197,7 @@ app.post("/webhook", async (req, res) => {
                         total: servicios.reduce((sum, servicio) => sum + (servicio.precio || 0), 0),
                     });
 
-                    // Insertar servicios asociados - versión actualizada
+                    // Insertar servicios asociados
                     for (const servicio of servicios) {
                         // Objeto base con los datos comunes
                         const servicioBase = {
@@ -121,20 +207,15 @@ app.post("/webhook", async (req, res) => {
                             tamaño: servicio.tamaño || null
                         };
                         
-                        // ELIMINADA LA INSERCIÓN DEL REGISTRO BASE
-                        // Ahora cada servicio tendrá al menos atributo 'tipo'
-                        
                         // Insertar todos los atributos como registros separados
                         const atributosAGuardar = [
-                            // Agregamos un atributo 'tipo' para identificar la naturaleza del servicio
                             { atributo: 'tipo', valor: servicio.tipo || 'simple' },
                             servicio.detalle ? { atributo: 'detalle', valor: servicio.detalle } : null,
                             servicio.descripcion ? { atributo: 'descripcion', valor: servicio.descripcion } : null,
                             servicio.atributo ? { atributo: servicio.atributo, valor: servicio.detalle || '' } : null,
                             { atributo: 'precio', valor: String(servicio.precio || 0) }
-                        ].filter(item => item !== null); // Eliminar elementos nulos
+                        ].filter(item => item !== null);
                         
-                        // Insertar cada atributo como un registro
                         for (const item of atributosAGuardar) {
                             await db("servicios").insert({
                                 ...servicioBase,
@@ -142,6 +223,11 @@ app.post("/webhook", async (req, res) => {
                                 valor: item.valor
                             });
                         }
+                    }
+
+                    // Limpiar la reserva pendiente si existe
+                    if (externalRef) {
+                        await db("reservas_pendientes").where({ token: externalRef }).delete();
                     }
 
                     await enviarMailDeConfirmacion({ to: email, fecha });
