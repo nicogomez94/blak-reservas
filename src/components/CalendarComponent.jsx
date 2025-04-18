@@ -6,7 +6,7 @@ import "./CalendarComponent.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const CalendarComponent = ({ onReserve, servicios }) => {
+const CalendarComponent = ({ onReserve, servicios, clienteData }) => {
     const [date, setDate] = useState(new Date());
     const [reservas, setReservas] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -68,14 +68,15 @@ const CalendarComponent = ({ onReserve, servicios }) => {
                 transaction_amount: montoTotal,
                 description: JSON.stringify({
                     fecha: fechaISO,
-                    servicios: serviciosSimplificados
+                    servicios: serviciosSimplificados,
+                    cliente: clienteData // Incluir los datos del cliente
                 }),
                 payer: { 
-                    email: "test_user_123456@testuser.com",
-                    name: "Usuario de Prueba",
+                    email: clienteData.email, // Usar el email del cliente
+                    name: clienteData.nombre, // Usar el nombre del cliente
                     identification: {
                         type: "DNI",
-                        number: "12345678"
+                        number: "12345678" // Idealmente también deberías pedir el DNI
                     }
                 }
             };

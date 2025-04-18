@@ -246,6 +246,7 @@ const AdminPanel = () => {
           <tr>
             <th>ID</th>
             <th>Fecha</th>
+            <th>Cliente</th>
             <th>Estado</th>
             <th>Total</th>
             <th>Servicios</th>
@@ -271,6 +272,44 @@ const AdminPanel = () => {
                     />
                   ) : (
                     reserva.fecha
+                  )}
+                </td>
+                <td>
+                  {editingReservaId === reserva.id ? (
+                    <>
+                      <input
+                        type="text"
+                        name="nombre"
+                        value={editedReserva.nombre || ""}
+                        onChange={handleInputChange}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="Nombre"
+                      />
+                      <input
+                        type="text"
+                        name="telefono"
+                        value={editedReserva.telefono || ""}
+                        onChange={handleInputChange}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="Teléfono"
+                        style={{marginTop: '5px'}}
+                      />
+                      <input
+                        type="text"
+                        name="email"
+                        value={editedReserva.email || ""}
+                        onChange={handleInputChange}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="Email"
+                        style={{marginTop: '5px'}}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      {reserva.nombre || "Sin datos"}<br/>
+                      {reserva.telefono && `📞 ${reserva.telefono}`}<br/>
+                      {reserva.email && `✉️ ${reserva.email}`}
+                    </>
                   )}
                 </td>
                 <td>
@@ -327,9 +366,16 @@ const AdminPanel = () => {
               
               {expandedReservas[reserva.id] && (
                 <tr className="servicios-expandidos">
-                  <td colSpan="6">
+                  <td colSpan="7">
                     <div className="servicios-container">
                       <h4>Detalle de Servicios</h4>
+                      
+                      {reserva.auto && (
+                        <div className="vehicle-info">
+                          <strong>Vehículo:</strong> {reserva.auto}
+                        </div>
+                      )}
+                      
                       {reserva.servicios && reserva.servicios.map((servicio) => (
                         <div key={servicio.id} className="servicio-item">
                           <h5>
@@ -387,7 +433,7 @@ const AdminPanel = () => {
           
           {reservas.length === 0 && (
             <tr>
-              <td colSpan="6">No hay reservas registradas.</td>
+              <td colSpan="7">No hay reservas registradas.</td>
             </tr>
           )}
         </tbody>

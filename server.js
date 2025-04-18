@@ -31,6 +31,7 @@ app.post("/create_preference", async (req, res) => {
         let title = "Reserva Blak";
         let fecha = "";
         let serviciosData = [];
+        let clienteData = {}; // Datos del cliente del formulario
         
         // Generar token único para esta reserva
         const reservaToken = crypto.randomBytes(16).toString("hex");
@@ -42,11 +43,15 @@ app.post("/create_preference", async (req, res) => {
                 title = `Reserva Blak para ${fecha}`;
                 serviciosData = parsed.servicios || [];
                 
-                // Guardar temporalmente los detalles de la reserva pendiente
+                // Extraer datos del cliente del formulario
+                clienteData = parsed.cliente || {};
+                
+                // Guardar temporalmente los detalles de la reserva pendiente incluyendo datos del cliente
                 await db("reservas_pendientes").insert({
                     token: reservaToken,
                     fecha,
                     servicios: JSON.stringify(serviciosData),
+                    cliente: JSON.stringify(clienteData), // Guardar datos del cliente tal cual
                     monto: transaction_amount,
                     created_at: new Date()
                 });
@@ -126,6 +131,9 @@ app.post("/webhook", async (req, res) => {
             const mpPayment = await paymentInsta.get({ id: payment.data.id });
             const status = mpPayment.api_response.status;
 
+            console.log("ESTRUCTURA COMPLETA DEL PAGO:");
+            console.log(JSON.stringify(mpPayment, null, 2));
+
             if (status == "200") {
                 // Obtener el token de referencia
                 const externalRef = mpPayment.external_reference;
@@ -147,107 +155,82 @@ app.post("/webhook", async (req, res) => {
                     
                     if (reservaPendiente) {
                         fecha = reservaPendiente.fecha;
+                        
+                        // Recuperar servicios
                         try {
                             servicios = JSON.parse(reservaPendiente.servicios);
                             console.log("✅ Servicios recuperados de reserva pendiente:", servicios.map(s => s.servicio).join(", "));
                         } catch (e) {
                             console.error("Error al parsear servicios de reserva pendiente:", e);
                         }
-                    } else {
-                        console.log("❌ No se encontró la reserva pendiente con token:", externalRef);
-                    }
-                }
-                
-                // Fallback: extraer la fecha del título
-                if (!fecha) {
-                    const fechaMatch = rawTitle.match(/para (\d{4}-\d{2}-\d{2})/);
-                    if (fechaMatch && fechaMatch[1]) {
-                        fecha = fechaMatch[1];
-                    }
-                }
-                
-                // Fallback para servicios si no se pudieron recuperar
-                if (!servicios || servicios.length === 0) {
-                    const monto = mpPayment.transaction_amount || 0;
-                    console.log("❌ No se pudieron recuperar servicios, usando genérico");
-                    servicios = [{
-                        servicio: "Reserva de servicio",
-                        precio: monto,
-                        tipo: "simple",
-                        descripcion: `Reserva para ${fecha}`,
-                        tamaño: "med"
-                    }];
-                }
-
-                if (fecha) {
-                    const reservasEnEseDia = await db("reservas")
-                        .where({ fecha })
-                        .count("id as total");
-                    const cantidad = reservasEnEseDia[0].total;
-
-                    if (cantidad >= 10) {
-                        console.warn(
-                            `❌ Día ${fecha} ya tiene el cupo completo. No se guarda la reserva.`
-                        );
                         
-                        // Marcar la reserva pendiente como fallida pero no la eliminamos
+                        // Recuperar datos del cliente SOLO del formulario guardado
+                        let clienteData = {};
+                        try {
+                            if (reservaPendiente.cliente) {
+                                clienteData = JSON.parse(reservaPendiente.cliente);
+                                console.log("✅ Datos del cliente recuperados del formulario:", clienteData);
+                            }
+                        } catch (e) {
+                            console.error("Error al parsear datos del cliente:", e);
+                        }
+                        
+                        // La fecha ya la tenemos, los servicios ya los tenemos
+                        // Solo insertar la reserva con los datos que ya hemos reunido
+                        const reservaId = await db("reservas").insert({
+                            fecha,
+                            status,
+                            token,
+                            total: servicios.reduce((sum, servicio) => sum + (servicio.precio || 0), 0),
+                            nombre: clienteData.nombre || null,
+                            telefono: clienteData.telefono || null,
+                            email: clienteData.email || null,
+                            auto: clienteData.auto || null
+                        });
+                        
+                        // Insertar servicios asociados
+                        for (const servicio of servicios) {
+                            // Objeto base con los datos comunes
+                            const servicioBase = {
+                                reserva_id: reservaId[0],
+                                nombre: servicio.servicio || servicio.nombre,
+                                subtipo: servicio.categoria || null,
+                                tamaño: servicio.tamaño || null
+                            };
+                            
+                            // Insertar todos los atributos como registros separados
+                            const atributosAGuardar = [
+                                { atributo: 'tipo', valor: servicio.tipo || 'simple' },
+                                servicio.detalle ? { atributo: 'detalle', valor: servicio.detalle } : null,
+                                servicio.descripcion ? { atributo: 'descripcion', valor: servicio.descripcion } : null,
+                                servicio.atributo ? { atributo: servicio.atributo, valor: servicio.detalle || '' } : null,
+                                { atributo: 'precio', valor: String(servicio.precio || 0) }
+                            ].filter(item => item !== null);
+                            
+                            for (const item of atributosAGuardar) {
+                                await db("servicios").insert({
+                                    ...servicioBase,
+                                    atributo: item.atributo,
+                                    valor: item.valor
+                                });
+                            }
+                        }
+
+                        // Marcar que la reserva se guardó exitosamente
+                        reservaGuardada = true;
+                        
+                        // Limpiar la reserva pendiente si existe
                         if (externalRef) {
                             await db("reservas_pendientes")
                                 .where({ token: externalRef })
-                                .update({ status: "FAILED_QUOTA_EXCEEDED" });
+                                .delete();
                         }
-                        
-                        return res.sendStatus(200);
+
+                        await enviarMailDeConfirmacion({ to: email, fecha });
+                        console.log(`✅ Reserva guardada para ${fecha}`);
+                    } else {
+                        console.log("❌ No se encontró la reserva pendiente con token:", externalRef);
                     }
-
-                    // Insertar reserva
-                    const reservaId = await db("reservas").insert({
-                        fecha,
-                        status,
-                        token,
-                        total: servicios.reduce((sum, servicio) => sum + (servicio.precio || 0), 0),
-                    });
-
-                    // Insertar servicios asociados
-                    for (const servicio of servicios) {
-                        // Objeto base con los datos comunes
-                        const servicioBase = {
-                            reserva_id: reservaId[0],
-                            nombre: servicio.servicio || servicio.nombre,
-                            subtipo: servicio.categoria || null,
-                            tamaño: servicio.tamaño || null
-                        };
-                        
-                        // Insertar todos los atributos como registros separados
-                        const atributosAGuardar = [
-                            { atributo: 'tipo', valor: servicio.tipo || 'simple' },
-                            servicio.detalle ? { atributo: 'detalle', valor: servicio.detalle } : null,
-                            servicio.descripcion ? { atributo: 'descripcion', valor: servicio.descripcion } : null,
-                            servicio.atributo ? { atributo: servicio.atributo, valor: servicio.detalle || '' } : null,
-                            { atributo: 'precio', valor: String(servicio.precio || 0) }
-                        ].filter(item => item !== null);
-                        
-                        for (const item of atributosAGuardar) {
-                            await db("servicios").insert({
-                                ...servicioBase,
-                                atributo: item.atributo,
-                                valor: item.valor
-                            });
-                        }
-                    }
-
-                    // Marcar que la reserva se guardó exitosamente
-                    reservaGuardada = true;
-                    
-                    // Limpiar la reserva pendiente si existe
-                    if (externalRef) {
-                        await db("reservas_pendientes")
-                            .where({ token: externalRef })
-                            .delete();
-                    }
-
-                    await enviarMailDeConfirmacion({ to: email, fecha });
-                    console.log(`✅ Reserva guardada para ${fecha}`);
                 } else {
                     console.log("❌ Fecha no válida, no se guardó la reserva.");
                     
