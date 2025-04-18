@@ -5,9 +5,12 @@ import "./AdminPanel.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Constante para saltear el login (cambia a false en producción)
+const DEV_MODE_SKIP_LOGIN = true; // <- Cambia esto a false cuando necesites el login
+
 const AdminPanel = () => {
   const [reservas, setReservas] = useState([]);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(DEV_MODE_SKIP_LOGIN); // Inicializa con el valor de la constante
   const [editingReservaId, setEditingReservaId] = useState(null);
   const [editedReserva, setEditedReserva] = useState({});
   const [editingServicioId, setEditingServicioId] = useState(null);
@@ -19,7 +22,7 @@ const AdminPanel = () => {
     const serviciosPorNombre = {};
     
     servicios.forEach(servicio => {
-      const clave = `${servicio.nombre}-${servicio.subtipo || ''}`;
+      const clave = `${servicio.reserva_id}-${servicio.nombre}-${servicio.subtipo || ''}`;
       
       if (!serviciosPorNombre[clave]) {
         serviciosPorNombre[clave] = {
@@ -30,13 +33,19 @@ const AdminPanel = () => {
           reserva_id: servicio.reserva_id,
           atributos: []
         };
-      }
-      
-      if (servicio.atributo && servicio.valor) {
-        serviciosPorNombre[clave].atributos.push({
-          id: servicio.id,
-          atributo: servicio.atributo,
-          valor: servicio.valor
+        
+        // Convert each service property into an attribute-value pair
+        // Skip structural fields that are already used elsewhere
+        const skipFields = ['id', 'nombre', 'subtipo', 'tamaño', 'reserva_id'];
+        
+        Object.entries(servicio).forEach(([key, value]) => {
+          if (!skipFields.includes(key)) {
+            serviciosPorNombre[clave].atributos.push({
+              id: `${servicio.id}-${key}`, // Create a unique ID
+              atributo: key,
+              valor: value
+            });
+          }
         });
       }
     });
@@ -56,6 +65,8 @@ const AdminPanel = () => {
           const serviciosResponse = await axios.get(`${API_URL}/servicios/${reserva.id}`, {
             headers: { "ngrok-skip-browser-warning": "true" },
           });
+          
+          console.log(`Servicios para reserva ${reserva.id}:`, serviciosResponse.data);
           
           // Agrupar servicios por nombre
           const serviciosAgrupados = agruparServicios(serviciosResponse.data);
@@ -120,11 +131,11 @@ const AdminPanel = () => {
     setEditedReserva({ ...editedReserva, [name]: value });
   };
 
-  const handleEditarServicio = (servicio, atributo) => {
-    setEditingServicioId(`${servicio.id}-${atributo.atributo}`);
-    setEditedServicio({ 
-      ...servicio,
-      atributoId: atributo.id,
+  // Función actualizada para editar servicio
+  const handleEditarServicio = (atributo) => {
+    setEditingServicioId(atributo.id);
+    setEditedServicio({
+      id: atributo.id,
       atributoNombre: atributo.atributo,
       atributoValor: atributo.valor
     });
@@ -135,32 +146,68 @@ const AdminPanel = () => {
     setEditedServicio({});
   };
 
+  // Función actualizada para guardar cambios de servicio en AdminPanel.jsx
   const handleGuardarCambiosServicio = async () => {
     if (window.confirm("¿Estás seguro de que quieres guardar los cambios en este servicio?")) {
       try {
-        // Preparar datos para la actualización
-        const servicioActualizado = {
-          id: editedServicio.atributoId,
-          nombre: editedServicio.nombre,
-          subtipo: editedServicio.subtipo,
-          tamaño: editedServicio.tamaño,
-          reserva_id: editedServicio.reserva_id,
-          atributo: editedServicio.atributoNombre,
-          valor: editedServicio.atributoValor
+        // Separar el ID compuesto para obtener el ID del servicio y el nombre del atributo
+        const [servicioId, atributoNombre] = editingServicioId.split('-');
+        
+        // Obtener el ID de la reserva a la que pertenece este servicio
+        let reservaId = null;
+        
+        // Buscar el servicio en todas las reservas para obtener su reservaId
+        for (const reserva of reservas) {
+          for (const servicio of (reserva.servicios || [])) {
+            if (servicio.id.toString() === servicioId) {
+              reservaId = reserva.id;
+              break;
+            }
+          }
+          if (reservaId) break;
+        }
+        
+        if (!reservaId) {
+          throw new Error("No se pudo encontrar la reserva asociada a este servicio");
+        }
+        
+        console.log(`Actualizando servicio ${servicioId} de la reserva ${reservaId}`);
+        console.log("Atributo a modificar:", editedServicio.atributoNombre);
+        console.log("Nuevo valor:", editedServicio.atributoValor);
+
+        // Crear un payload simplificado con solo el atributo a modificar
+        const updatePayload = {
+          reserva_id: parseInt(reservaId),
+          id: parseInt(servicioId),
+          [editedServicio.atributoNombre]: editedServicio.atributoValor
         };
+        
+        console.log("Payload de actualización:", updatePayload);
 
-        await axios.put(`${API_URL}/servicios/${editedServicio.atributoId}`, servicioActualizado, {
-          headers: { "ngrok-skip-browser-warning": "true" },
-        });
+        // Enviar la solicitud PUT con el ID de la reserva y el servicio
+        const response = await axios.put(
+          `${API_URL}/servicios/${reservaId}/${servicioId}`, 
+          updatePayload, 
+          { headers: { "ngrok-skip-browser-warning": "true" } }
+        );
+        
+        console.log("Respuesta del servidor:", response.data);
 
-        // Actualizar la interfaz de usuario
-        fetchReservas(); // Refrescar todos los datos
-
-        // Resetear el estado de edición
-        setEditingServicioId(null);
-        setEditedServicio({});
+        // Si todo fue bien, actualizar la interfaz
+        if (response.data.success) {
+          // Actualizar la interfaz
+          fetchReservas();
+          
+          // Resetear el estado de edición
+          setEditingServicioId(null);
+          setEditedServicio({});
+        } else {
+          throw new Error(response.data.error || "Error desconocido al guardar");
+        }
       } catch (error) {
         console.error("Error al guardar los cambios del servicio:", error);
+        console.error("Detalles del error:", error.response?.data || error.message);
+        alert(`Error al guardar: ${error.message}`);
       }
     }
   };
@@ -254,7 +301,7 @@ const AdminPanel = () => {
                 </td>
                 <td>
                   {reserva.servicios && reserva.servicios.length > 0
-                    ? `${reserva.servicios.length} servicios`
+                    ? `${reserva.servicios.length} servicio(s)`
                     : "No hay servicios"}
                 </td>
                 <td onClick={(e) => e.stopPropagation()}>
@@ -283,7 +330,7 @@ const AdminPanel = () => {
                   <td colSpan="6">
                     <div className="servicios-container">
                       <h4>Detalle de Servicios</h4>
-                      {reserva.servicios.map((servicio) => (
+                      {reserva.servicios && reserva.servicios.map((servicio) => (
                         <div key={servicio.id} className="servicio-item">
                           <h5>
                             {servicio.nombre}
@@ -300,11 +347,11 @@ const AdminPanel = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {servicio.atributos.map((atributo) => (
-                                <tr key={`${servicio.id}-${atributo.atributo}`}>
+                              {servicio.atributos && servicio.atributos.map((atributo) => (
+                                <tr key={atributo.id}>
                                   <td>{atributo.atributo}</td>
                                   <td>
-                                    {editingServicioId === `${servicio.id}-${atributo.atributo}` ? (
+                                    {editingServicioId === atributo.id ? (
                                       <input
                                         type="text"
                                         name="atributoValor"
@@ -316,13 +363,13 @@ const AdminPanel = () => {
                                     )}
                                   </td>
                                   <td>
-                                    {editingServicioId === `${servicio.id}-${atributo.atributo}` ? (
+                                    {editingServicioId === atributo.id ? (
                                       <>
                                         <button className="btn_admin_guardar" onClick={handleGuardarCambiosServicio}>Guardar</button>
                                         <button className="btn_admin_cancelar" onClick={handleCancelarEdicionServicio}>Cancelar</button>
                                       </>
                                     ) : (
-                                      <button className="btn_admin_editar" onClick={() => handleEditarServicio(servicio, atributo)}>Editar</button>
+                                      <button className="btn_admin_editar" onClick={() => handleEditarServicio(atributo)}>Editar</button>
                                     )}
                                   </td>
                                 </tr>

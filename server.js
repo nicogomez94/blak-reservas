@@ -464,6 +464,82 @@ app.get("/verificar-reserva/:token", async (req, res) => {
     }
 });
 
+// Corregir la implementación del endpoint en server.js
+app.put("/servicios/:reservaId/:servicioId", async (req, res) => {
+    const { reservaId, servicioId } = req.params;
+    const updatedServicio = req.body;
+    
+    try {
+        console.log(`Actualizando servicio ${servicioId} de la reserva ${reservaId}`);
+        console.log("Datos recibidos:", updatedServicio);
+        
+        // Asegurarse de que los IDs en la URL coincidan con los del payload
+        updatedServicio.id = parseInt(servicioId);
+        updatedServicio.reserva_id = parseInt(reservaId);
+        
+        // Extraer los atributos básicos y los dinámicos
+        const { servicio, nombre, categoria, tamaño, ...atributos } = updatedServicio;
+        
+        // Extraer el nombre del atributo y su valor
+        const nombreAtributo = Object.keys(atributos).find(key => 
+            key !== 'id' && key !== 'reserva_id');
+        
+        if (!nombreAtributo) {
+            return res.status(400).json({ success: false, error: "No se especificó qué atributo actualizar" });
+        }
+        
+        const valorAtributo = atributos[nombreAtributo];
+        console.log(`Actualizando atributo '${nombreAtributo}' con valor '${valorAtributo}'`);
+        
+        // Buscar si ya existe un registro para este atributo
+        const existente = await db("servicios")
+            .where({ 
+                reserva_id: parseInt(reservaId),
+                id: parseInt(servicioId),
+                atributo: nombreAtributo
+            })
+            .first();
+            
+        if (existente) {
+            // Actualizar el registro existente
+            await db("servicios")
+                .where({ id: existente.id })
+                .update({ valor: String(valorAtributo) });
+                
+            console.log(`✅ Actualizado el registro existente ID=${existente.id}`);
+        } else {
+            // Obtener información básica del servicio
+            const infoServicio = await db("servicios")
+                .where({ id: parseInt(servicioId) })
+                .first();
+                
+            if (!infoServicio) {
+                return res.status(404).json({ 
+                    success: false, 
+                    error: "No se encontró el servicio especificado" 
+                });
+            }
+            
+            // Crear un nuevo registro para este atributo
+            await db("servicios").insert({
+                reserva_id: parseInt(reservaId),
+                nombre: infoServicio.nombre,
+                subtipo: infoServicio.subtipo,
+                atributo: nombreAtributo,
+                valor: String(valorAtributo),
+                tamaño: infoServicio.tamaño
+            });
+            
+            console.log("✅ Creado nuevo registro para el atributo");
+        }
+        
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error("Error al actualizar el servicio:", error);
+        res.status(500).json({ success: false, error: "No se pudo actualizar el servicio." });
+    }
+});
+
 // Iniciar el servidor en el puerto 3001
 app.listen(3001, () => {
     console.log("Servidor corriendo en http://localhost:3001");
