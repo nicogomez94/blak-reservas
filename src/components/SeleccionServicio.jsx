@@ -90,9 +90,27 @@ const serviciosDisponibles = [
 ];
 
 const tiposVehiculo = [
-    { id: "chico", nombre: "Auto compacto", tamaño: "sml" },
-    { id: "mediano", nombre: "Sedán / Mini SUV", tamaño: "med" },
-    { id: "grande", nombre: "SUV / Pickup", tamaño: "lrg" }
+    { 
+        id: "chico", 
+        nombre: "Auto compacto", 
+        tamaño: "sml",
+        imagen: "2",
+        descripcion: "Clio, Chery QQ, Kwid, Fiat 500, VW Up, Fiat Uno"
+    },
+    { 
+        id: "mediano", 
+        nombre: "Sedán / Mini SUV", 
+        tamaño: "med",
+        imagen: "2",
+        descripcion: "Toyota Hilux, Ford Ranger, Jeep Compass, Nissan X-Trail, Chevrolet Tracker"
+     },
+    { 
+        id: "grande", 
+        nombre: "SUV / Pickup", 
+        tamaño: "lrg",
+        imagen: "2",
+        descripcion: "Toyota Hilux, Ford Ranger, Jeep Compass, Nissan X-Trail, Chevrolet Tracker"
+    }
 ];
 
 const SeleccionServicio = ({ onSeleccionar }) => {
@@ -383,6 +401,7 @@ const SeleccionServicio = ({ onSeleccionar }) => {
 
                 {/* Vista Tipo de Vehículo */}
                 <div className="step step-TIPO_VEHICULO">
+                       
                     <h2>1. Elegí tu tipo de vehículo</h2>
                     <ul className="selection-list vehicle-list">
                         {tiposVehiculo.map((vehiculo) => (
@@ -392,6 +411,14 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                                 onClick={() => handleSelection(vehiculo)}
                             >
                                 <span className="item-name">{vehiculo.nombre}</span>
+                                <span className="item-img">
+                                    <img 
+                                        src={`../../public/APP/servicio/${vehiculo.imagen}.png`} 
+                                        alt={`Imagen de ${vehiculo.nombre}`} 
+                                        className="vehicle-image" 
+                                    />
+                                </span>
+                                <span className="item-descr">{`${vehiculo.descripcion}`}</span>
                             </li>
                         ))}
                     </ul>
@@ -401,8 +428,8 @@ const SeleccionServicio = ({ onSeleccionar }) => {
                 <div className="step step-LISTA_SERVICIOS">
                     {tipoVehiculo && (
                         <>
-                            <button onClick={() => navigateTo('TIPO_VEHICULO')} className="back-button">← Cambiar Vehículo</button>
                             <h2>2. Seleccioná los servicios</h2>
+                            <button onClick={() => navigateTo('TIPO_VEHICULO')} className="back-button">← Cambiar Vehículo</button>
                             <ul className="selection-list service-list">
                                 {serviciosDisponibles.map((servicio) => (
                                     <li 
