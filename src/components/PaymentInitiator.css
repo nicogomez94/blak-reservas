@@ -1,0 +1,52 @@
+.payment-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: #fff;
+  text-align: center;
+}
+
+.payment-container h2 {
+  color: #00ff88;
+  margin-bottom: 20px;
+}
+
+.reservation-summary {
+  margin: 25px 0;
+  padding: 20px;
+  background-color: rgba(0, 255, 136, 0.1);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.reservation-summary h3 {
+  color: #00ff88;
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.reservation-summary p {
+  margin: 8px 0;
+}
+
+.payment-button {
+  background-color: #00ff88;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  padding: 14px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 20px;
+}
+
+.payment-button:hover {
+  background-color: #00cc6e;
+}

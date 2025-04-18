@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./ClienteForm.css";
 
-const ClienteForm = ({ onSubmit, servicios, total }) => {
+const ClienteForm = ({ onSubmit, servicios, total, fecha }) => {
   const [formData, setFormData] = useState({
     nombre: "",
     telefono: "",
@@ -69,6 +69,7 @@ const ClienteForm = ({ onSubmit, servicios, total }) => {
       
       <div className="form-summary">
         <h3>Resumen de reserva</h3>
+        <p><strong>Fecha seleccionada:</strong> {new Date(fecha).toLocaleDateString()}</p>
         <p><strong>Servicios seleccionados:</strong> {servicios.length}</p>
         <p><strong>Total a pagar:</strong> ${total}</p>
       </div>

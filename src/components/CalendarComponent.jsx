@@ -6,7 +6,7 @@ import "./CalendarComponent.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const CalendarComponent = ({ onReserve, servicios, clienteData }) => {
+const CalendarComponent = ({ onFechaSeleccionada, servicios }) => {
     const [date, setDate] = useState(new Date());
     const [reservas, setReservas] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -40,67 +40,15 @@ const CalendarComponent = ({ onReserve, servicios, clienteData }) => {
         return servicios.reduce((total, servicio) => total + (servicio.precio || 0), 0);
     };
 
-    const handleReserveClick = async () => {
+    const handleContinueClick = () => {
         const fechaISO = date.toISOString().split("T")[0];
         if (isFechaLlena(date)) {
             alert("Ese día ya está completo. Por favor, elegí otro.");
             return;
         }
-
-        try {
-            setLoading(true);
-            setError(null);
-            
-            const serviciosSimplificados = servicios.map(s => ({
-                servicio: s.servicio || s.nombre,
-                categoria: s.categoria || null,
-                atributo: s.atributo || null,
-                detalle: s.detalle || null,
-                descripcion: s.descripcion || null,
-                precio: s.precio || 0,
-                tamaño: s.tamaño || null,
-                tipo: s.tipo || 'simple'
-            }));
-            
-            const montoTotal = calcularMontoTotal();
-            
-            const paymentData = {
-                transaction_amount: montoTotal,
-                description: JSON.stringify({
-                    fecha: fechaISO,
-                    servicios: serviciosSimplificados,
-                    cliente: clienteData // Incluir los datos del cliente
-                }),
-                payer: { 
-                    email: clienteData.email, // Usar el email del cliente
-                    name: clienteData.nombre, // Usar el nombre del cliente
-                    identification: {
-                        type: "DNI",
-                        number: "12345678" // Idealmente también deberías pedir el DNI
-                    }
-                }
-            };
-
-            const response = await axios.post(
-                `${API_URL}/create_preference`, 
-                paymentData
-            );
-
-            if (response.data && response.data.init_point) {
-                window.open(response.data.init_point, '_blank');
-            } else {
-                throw new Error("No se recibió la URL de pago");
-            }
-        } catch (error) {
-            console.error("Error al iniciar el pago:", error);
-            setError("Hubo un error al procesar tu pago. Por favor, intenta nuevamente.");
-            
-            if (error.response) {
-                console.error("Detalles del error:", error.response.data);
-            }
-        } finally {
-            setLoading(false);
-        }
+        
+        // Pasar la fecha seleccionada al componente padre
+        onFechaSeleccionada(fechaISO);
     };
 
     return (
@@ -124,11 +72,11 @@ const CalendarComponent = ({ onReserve, servicios, clienteData }) => {
             )}
 
             <button 
-                onClick={handleReserveClick} 
+                onClick={handleContinueClick} 
                 disabled={loading}
                 className={loading ? "loading-button" : ""}
             >
-                {loading ? "Procesando..." : `Pagar reserva ($${calcularMontoTotal().toLocaleString()} ARS)`}
+                {loading ? "Procesando..." : "Continuar con tus datos"}
             </button>
         </div>
     );
