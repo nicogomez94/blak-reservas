@@ -56,6 +56,23 @@
   color: #333;
   position: sticky;
   top: 0;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.reservas-table th:hover {
+  background-color: rgba(0, 255, 136, 0.1);
+}
+
+.sort-indicator {
+  margin-left: 5px;
+  display: inline-block;
+}
+
+.sort-active {
+  font-weight: bold;
+  color: #00ff88;
 }
 
 .reservas-table tr:hover {

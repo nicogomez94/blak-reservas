@@ -15,6 +15,10 @@ const AdminPanel = () => {
   const [editingServicioId, setEditingServicioId] = useState(null);
   const [editedServicio, setEditedServicio] = useState({});
   const [expandedReservas, setExpandedReservas] = useState({});
+  const [sortConfig, setSortConfig] = useState({
+    key: 'id',        
+    direction: 'desc' // Mantener 'desc' para que el más reciente (ID mayor) aparezca primero
+  });
 
   // Función para agrupar servicios por nombre
   const agruparServicios = (servicios) => {
@@ -222,6 +226,49 @@ const AdminPanel = () => {
     }));
   };
 
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedReservas = React.useMemo(() => {
+    const sortableReservas = [...reservas];
+    if (sortConfig.key) {
+      sortableReservas.sort((a, b) => {
+        // Manejar valores nulos o indefinidos
+        if (a[sortConfig.key] === null) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (b[sortConfig.key] === null) return sortConfig.direction === 'asc' ? 1 : -1;
+        
+        // Para fechas, comparar objetos Date
+        if (sortConfig.key === 'fecha') {
+          return sortConfig.direction === 'asc' 
+            ? new Date(a.fecha) - new Date(b.fecha)
+            : new Date(b.fecha) - new Date(a.fecha);
+        }
+        
+        // Para números (como precio total)
+        if (sortConfig.key === 'total') {
+          return sortConfig.direction === 'asc'
+            ? a.total - b.total
+            : b.total - a.total;
+        }
+        
+        // Para textos (nombre, email, etc)
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableReservas;
+  }, [reservas, sortConfig]);
+
   useEffect(() => {
     if (loggedIn) fetchReservas();
   }, [loggedIn]);
@@ -242,17 +289,27 @@ const AdminPanel = () => {
       <table className="reservas-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Fecha</th>
-            <th>Cliente</th>
-            <th>Estado</th>
-            <th>Total</th>
+            <th onClick={() => handleSort('id')}>
+              ID {sortConfig.key === 'id' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+            </th>
+            <th onClick={() => handleSort('fecha')}>
+              Fecha {sortConfig.key === 'fecha' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+            </th>
+            <th onClick={() => handleSort('nombre')}>
+              Cliente {sortConfig.key === 'nombre' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+            </th>
+            <th onClick={() => handleSort('status')}>
+              Estado {sortConfig.key === 'status' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+            </th>
+            <th onClick={() => handleSort('total')}>
+              Total {sortConfig.key === 'total' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
+            </th>
             <th>Servicios</th>
             <th>Acción</th>
           </tr>
         </thead>
         <tbody>
-          {reservas.map((reserva) => (
+          {sortedReservas.map((reserva) => (
             <React.Fragment key={reserva.id}>
               <tr
                 className={editingReservaId === reserva.id ? "editing-row" : ""}
