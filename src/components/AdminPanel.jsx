@@ -21,6 +21,8 @@ const AdminPanel = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [searchCategory, setSearchCategory] = useState('all'); // Categoría de búsqueda (nombre, fecha, etc.)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Función para agrupar servicios por nombre
   const agruparServicios = (servicios) => {
@@ -38,19 +40,19 @@ const AdminPanel = () => {
           reserva_id: servicio.reserva_id,
           atributos: []
         };
-        
-        const skipFields = ['id', 'nombre', 'subtipo', 'tamaño', 'reserva_id'];
-        
-        Object.entries(servicio).forEach(([key, value]) => {
-          if (!skipFields.includes(key)) {
-            serviciosPorNombre[clave].atributos.push({
-              id: `${servicio.id}-${key}`, // Create a unique ID
-              atributo: key,
-              valor: value
-            });
-          }
-        });
       }
+      
+      const skipFields = ['id', 'nombre', 'subtipo', 'tamaño', 'reserva_id'];
+      
+      Object.entries(servicio).forEach(([key, value]) => {
+        if (!skipFields.includes(key)) {
+          serviciosPorNombre[clave].atributos.push({
+            id: `${servicio.id}-${key}`, // Create a unique ID
+            atributo: key,
+            valor: value
+          });
+        }
+      });
     });
     
     return Object.values(serviciosPorNombre);
@@ -79,6 +81,7 @@ const AdminPanel = () => {
       );
 
       setReservas(reservasWithServicios);
+      console.log("Reservas cargadas:", reservasWithServicios);
     } catch (error) {
       console.error("Error al obtener las reservas:", error);
     }
@@ -90,7 +93,10 @@ const AdminPanel = () => {
         .delete(`${API_URL}/reservas/${id}`, {
           headers: { "ngrok-skip-browser-warning": "true" },
         })
-        .then(() => setReservas(reservas.filter((r) => r.id !== id)))
+        .then(() => {
+          setReservas(reservas.filter((r) => r.id !== id));
+          console.log(`Reserva ${id} eliminada correctamente`);
+        })
         .catch((err) => console.error("Error al eliminar reserva:", err));
     }
   };
@@ -123,6 +129,7 @@ const AdminPanel = () => {
 
         setEditingReservaId(null);
         setEditedReserva({});
+        console.log(`Reserva ${editingReservaId} actualizada correctamente`);
       } catch (error) {
         console.error("Error al guardar los cambios:", error);
       }
@@ -209,9 +216,45 @@ const AdminPanel = () => {
           { headers: { "ngrok-skip-browser-warning": "true" } }
         );
         
+        // Actualizar estado local después de la actualización exitosa
+        if (response.data && response.data.success) {
+          // Actualizar el estado local
+          const updatedReservas = reservas.map(reserva => {
+            if (reserva.id === reservaId) {
+              const updatedServicios = reserva.servicios.map(servicio => {
+                if (servicio.id.toString() === servicioId) {
+                  const updatedAtributos = servicio.atributos.map(atributo => {
+                    if (atributo.id === editingServicioId) {
+                      return {
+                        ...atributo,
+                        valor: editedServicio.atributoValor
+                      };
+                    }
+                    return atributo;
+                  });
+                  return {
+                    ...servicio,
+                    atributos: updatedAtributos
+                  };
+                }
+                return servicio;
+              });
+              return {
+                ...reserva,
+                servicios: updatedServicios
+              };
+            }
+            return reserva;
+          });
+          
+          setReservas(updatedReservas);
+          setEditingServicioId(null);
+          setEditedServicio({});
+          console.log("Servicio actualizado con éxito:", response.data.message);
+        }
       } catch (error) {
-        // Manejo de errores
         console.error("Error al guardar los cambios del servicio:", error);
+        alert("Error al guardar cambios: " + (error.response?.data?.error || error.message));
       }
     }
   };
@@ -234,6 +277,17 @@ const AdminPanel = () => {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+  };
+
+  const paginate = (items) => {
+    const totalPages = Math.ceil(items.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    return {
+      currentItems: items.slice(startIndex, endIndex),
+      totalPages
+    };
   };
 
   const filteredReservas = React.useMemo(() => {
@@ -287,7 +341,7 @@ const AdminPanel = () => {
   }, [reservas, searchTerm, searchCategory]);
 
   const sortedReservas = React.useMemo(() => {
-    const sortableReservas = [...filteredReservas]; // Cambiar reservas por filteredReservas
+    const sortableReservas = [...filteredReservas];
     if (sortConfig.key) {
       sortableReservas.sort((a, b) => {
         // Manejar valores nulos o indefinidos
@@ -318,12 +372,18 @@ const AdminPanel = () => {
         return 0;
       });
     }
-    return sortableReservas;
-  }, [filteredReservas, sortConfig]); // Cambiar la dependencia de reservas a filteredReservas
+    const { currentItems, totalPages } = paginate(sortableReservas);
+    return { items: currentItems, totalPages };
+  }, [filteredReservas, sortConfig, itemsPerPage, currentPage]);
 
   useEffect(() => {
     if (loggedIn) fetchReservas();
   }, [loggedIn]);
+
+  // Reset a la página 1 cuando cambie el tamaño de página o término de búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, itemsPerPage, searchCategory]);
 
   if (!loggedIn) return <AdminLogin onLogin={() => setLoggedIn(true)} />;
 
@@ -333,7 +393,10 @@ const AdminPanel = () => {
       
       <div className="admin-header">
         <h3>
-          Reservas {searchTerm ? `(${sortedReservas.length} de ${reservas.length})` : `(${reservas.length})`}
+          Reservas {searchTerm 
+            ? `(${filteredReservas.length} de ${reservas.length})` 
+            : `(${reservas.length})`}
+          {sortedReservas.totalPages > 1 && ` - Página ${currentPage} de ${sortedReservas.totalPages}`}
         </h3>
         <button className="btn-refresh" onClick={fetchReservas}>
           Actualizar Datos
@@ -375,6 +438,58 @@ const AdminPanel = () => {
         </div>
       </div>
       
+      <div className="pagination-container">
+        <div className="items-per-page">
+          <label>Mostrar:</label>
+          <select 
+            value={itemsPerPage} 
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1); // Reset a la primera página cuando cambia el tamaño
+            }}
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <span>registros por página</span>
+        </div>
+        
+        {sortedReservas.totalPages > 1 && (
+          <div className="pagination-controls">
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              &lt; Anterior
+            </button>
+            
+            <div className="page-numbers">
+              {Array.from({ length: sortedReservas.totalPages }, (_, i) => i + 1).map(number => (
+                <button
+                  key={number}
+                  onClick={() => setCurrentPage(number)}
+                  className={`page-number ${currentPage === number ? 'active' : ''}`}
+                >
+                  {number}
+                </button>
+              ))}
+            </div>
+            
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, sortedReservas.totalPages))} 
+              disabled={currentPage === sortedReservas.totalPages}
+              className="pagination-btn"
+            >
+              Siguiente &gt;
+            </button>
+          </div>
+        )}
+      </div>
+      
       <table className="reservas-table">
         <thead>
           <tr>
@@ -398,7 +513,7 @@ const AdminPanel = () => {
           </tr>
         </thead>
         <tbody>
-          {sortedReservas.map((reserva) => (
+          {sortedReservas.items.map((reserva) => (
             <React.Fragment key={reserva.id}>
               <tr
                 className={editingReservaId === reserva.id ? "editing-row" : ""}
@@ -445,6 +560,15 @@ const AdminPanel = () => {
                         onChange={handleInputChange}
                         onClick={(e) => e.stopPropagation()}
                         placeholder="Email"
+                        style={{marginTop: '5px'}}
+                      />
+                      <input
+                        type="text"
+                        name="auto"
+                        value={editedReserva.auto || ""}
+                        onChange={handleInputChange}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="Vehículo"
                         style={{marginTop: '5px'}}
                       />
                     </>
@@ -520,8 +644,8 @@ const AdminPanel = () => {
                         </div>
                       )}
                       
-                      {reserva.servicios && reserva.servicios.map((servicio) => (
-                        <div key={servicio.id} className="servicio-item">
+                      {reserva.servicios && reserva.servicios.map((servicio, idx) => (
+                        <div className="servicio-item" key={`${servicio.id}-${idx}`}>
                           <h5>
                             {servicio.nombre}
                             {servicio.subtipo && <span className="subtipo"> ({servicio.subtipo})</span>}
@@ -575,7 +699,7 @@ const AdminPanel = () => {
             </React.Fragment>
           ))}
           
-          {sortedReservas.length === 0 && (
+          {sortedReservas.items.length === 0 && (
             <tr>
               <td colSpan="7" className="no-results">
                 {reservas.length === 0 
@@ -586,6 +710,44 @@ const AdminPanel = () => {
           )}
         </tbody>
       </table>
+      
+      {sortedReservas.totalPages > 1 && (
+        <div className="pagination-container bottom">
+          <div className="pagination-info">
+            Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, filteredReservas.length)} de {filteredReservas.length} resultados
+          </div>
+          
+          <div className="pagination-controls">
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              &lt; Anterior
+            </button>
+            
+            <div className="page-numbers">
+              {Array.from({ length: sortedReservas.totalPages }, (_, i) => i + 1).map(number => (
+                <button
+                  key={number}
+                  onClick={() => setCurrentPage(number)}
+                  className={`page-number ${currentPage === number ? 'active' : ''}`}
+                >
+                  {number}
+                </button>
+              ))}
+            </div>
+            
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, sortedReservas.totalPages))} 
+              disabled={currentPage === sortedReservas.totalPages}
+              className="pagination-btn"
+            >
+              Siguiente &gt;
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
