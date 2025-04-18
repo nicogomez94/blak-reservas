@@ -5,8 +5,7 @@ import "./AdminPanel.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Constante para saltear el login (cambia a false en producción)
-const DEV_MODE_SKIP_LOGIN = true; // <- Cambia esto a false cuando necesites el login
+const DEV_MODE_SKIP_LOGIN = true;
 
 const AdminPanel = () => {
   const [reservas, setReservas] = useState([]);
@@ -34,8 +33,6 @@ const AdminPanel = () => {
           atributos: []
         };
         
-        // Convert each service property into an attribute-value pair
-        // Skip structural fields that are already used elsewhere
         const skipFields = ['id', 'nombre', 'subtipo', 'tamaño', 'reserva_id'];
         
         Object.entries(servicio).forEach(([key, value]) => {
@@ -146,22 +143,37 @@ const AdminPanel = () => {
     setEditedServicio({});
   };
 
-  // Función actualizada para guardar cambios de servicio en AdminPanel.jsx
   const handleGuardarCambiosServicio = async () => {
     if (window.confirm("¿Estás seguro de que quieres guardar los cambios en este servicio?")) {
       try {
-        // Separar el ID compuesto para obtener el ID del servicio y el nombre del atributo
-        const [servicioId, atributoNombre] = editingServicioId.split('-');
+        const idParts = editingServicioId.split('-');
+        const servicioId = idParts[0]; // El primer elemento es siempre el ID
+        const atributoNombre = idParts.slice(1).join('-');
         
-        // Obtener el ID de la reserva a la que pertenece este servicio
+        console.log(`ID servicio: ${servicioId}, Atributo: ${atributoNombre}`);
+        
+        // Buscar el servicio y la reserva asociada
         let reservaId = null;
+        let nombreServicio = null;
         
-        // Buscar el servicio en todas las reservas para obtener su reservaId
+        // Buscar el servicio en todas las reservas
         for (const reserva of reservas) {
           for (const servicio of (reserva.servicios || [])) {
             if (servicio.id.toString() === servicioId) {
               reservaId = reserva.id;
+              nombreServicio = servicio.nombre;
               break;
+            }
+            
+            // Si no encontramos por ID, también buscamos en los atributos
+            if (!reservaId) {
+              for (const atributo of servicio.atributos || []) {
+                if (atributo.id.toString().startsWith(servicioId)) {
+                  reservaId = reserva.id;
+                  nombreServicio = servicio.nombre;
+                  break;
+                }
+              }
             }
           }
           if (reservaId) break;
@@ -171,43 +183,29 @@ const AdminPanel = () => {
           throw new Error("No se pudo encontrar la reserva asociada a este servicio");
         }
         
-        console.log(`Actualizando servicio ${servicioId} de la reserva ${reservaId}`);
-        console.log("Atributo a modificar:", editedServicio.atributoNombre);
-        console.log("Nuevo valor:", editedServicio.atributoValor);
-
-        // Crear un payload simplificado con solo el atributo a modificar
+        console.log(`Actualizando servicio de "${nombreServicio}" en reserva ${reservaId}`);
+        console.log(`Atributo a modificar: "${editedServicio.atributoNombre}", Nuevo valor: "${editedServicio.atributoValor}"`);
+        
+        // Crear un payload con el nombre del servicio para mejor búsqueda en el servidor
         const updatePayload = {
           reserva_id: parseInt(reservaId),
           id: parseInt(servicioId),
+          nombre: nombreServicio,
           [editedServicio.atributoNombre]: editedServicio.atributoValor
         };
         
         console.log("Payload de actualización:", updatePayload);
 
-        // Enviar la solicitud PUT con el ID de la reserva y el servicio
+        // Enviar la solicitud PUT
         const response = await axios.put(
           `${API_URL}/servicios/${reservaId}/${servicioId}`, 
           updatePayload, 
           { headers: { "ngrok-skip-browser-warning": "true" } }
         );
         
-        console.log("Respuesta del servidor:", response.data);
-
-        // Si todo fue bien, actualizar la interfaz
-        if (response.data.success) {
-          // Actualizar la interfaz
-          fetchReservas();
-          
-          // Resetear el estado de edición
-          setEditingServicioId(null);
-          setEditedServicio({});
-        } else {
-          throw new Error(response.data.error || "Error desconocido al guardar");
-        }
       } catch (error) {
+        // Manejo de errores
         console.error("Error al guardar los cambios del servicio:", error);
-        console.error("Detalles del error:", error.response?.data || error.message);
-        alert(`Error al guardar: ${error.message}`);
       }
     }
   };

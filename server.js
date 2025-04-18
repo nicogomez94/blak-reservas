@@ -436,84 +436,99 @@ app.get("/verificar-reserva/:token", async (req, res) => {
     }
 });
 
-// Actualiza el endpoint PUT para servicios
-
+// Ruta PUT para actualizar servicios
 app.put("/servicios/:reservaId/:servicioId", async (req, res) => {
+  try {
     const { reservaId, servicioId } = req.params;
-    const updatedServicio = req.body;
+    const updateData = req.body;
     
-    try {
-        console.log(`Actualizando servicio ${servicioId} de la reserva ${reservaId}`);
-        console.log("Datos recibidos:", updatedServicio);
-        
-        // Extraer el nombre del atributo y su valor
-        const atributoNombre = Object.keys(updatedServicio).find(key => 
-            key !== 'id' && key !== 'reserva_id');
-        
-        if (!atributoNombre) {
-            return res.status(400).json({ 
-                success: false, 
-                error: "No se especificó qué atributo actualizar" 
-            });
-        }
-        
-        const valorAtributo = updatedServicio[atributoNombre];
-        console.log(`Actualizando atributo '${atributoNombre}' con valor '${valorAtributo}'`);
-        
-        // IMPORTANTE: Buscar si ya existe un registro para este atributo
-        const registroExistente = await db("servicios")
-            .where({ 
-                reserva_id: parseInt(reservaId),
-                nombre: "Fumé ópticas", // Este debería ser dinámico, pero usamos el valor conocido por ahora
-                atributo: atributoNombre
-            })
-            .first();
-            
-        if (registroExistente) {
-            // ACTUALIZAR el registro existente en vez de crear uno nuevo
-            console.log(`Encontrado registro existente con ID ${registroExistente.id}, actualizando valor...`);
-            
-            await db("servicios")
-                .where({ id: registroExistente.id })
-                .update({ valor: String(valorAtributo) });
-                
-            console.log(`✅ Registro ${registroExistente.id} actualizado con éxito`);
-            res.status(200).json({ success: true });
-        } else {
-            // Si no existe, entonces creamos uno nuevo (caso poco común)
-            console.log(`No se encontró registro para ${atributoNombre}, creando uno nuevo...`);
-            
-            // Obtener información del servicio para crear un registro coherente
-            const infoServicio = await db("servicios")
-                .where({ id: parseInt(servicioId) })
-                .first();
-                
-            if (!infoServicio) {
-                return res.status(404).json({ 
-                    success: false, 
-                    error: "No se encontró el servicio especificado" 
-                });
-            }
-            
-            await db("servicios").insert({
-                reserva_id: parseInt(reservaId),
-                nombre: infoServicio.nombre,
-                subtipo: infoServicio.subtipo,
-                atributo: atributoNombre,
-                valor: String(valorAtributo),
-                tamaño: infoServicio.tamaño
-            });
-            
-            console.log("✅ Creado nuevo registro para el atributo");
-            res.status(200).json({ success: true });
-        }
-    } catch (error) {
-        console.error("Error al actualizar el servicio:", error);
-        res.status(500).json({ 
-            success: false, 
-            error: "No se pudo actualizar el servicio: " + error.message 
-        });
+    console.log(`Actualizando servicio ID ${servicioId} de reserva ${reservaId}`);
+    console.log("Datos recibidos:", updateData);
+    
+    // Extraer el nombre del atributo y su valor
+    const atributoNombre = Object.keys(updateData).find(key => 
+      !['id', 'reserva_id', 'nombre'].includes(key));
+    
+    if (!atributoNombre) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "No se especificó qué atributo actualizar" 
+      });
     }
+    
+    const valorAtributo = updateData[atributoNombre];
+    const nombreServicio = updateData.nombre || 'Fumé ópticas'; // Valor por defecto
+    
+    console.log(`Buscando registro para servicio "${nombreServicio}", atributo "${atributoNombre}"`);
+    
+    // IMPORTANTE: Búsqueda más precisa que incluye el nombre del servicio
+    const registroExistente = await db("servicios")
+      .where({ 
+        reserva_id: parseInt(reservaId),
+        atributo: atributoNombre
+      })
+      .whereRaw("LOWER(nombre) LIKE ?", [`%${nombreServicio.toLowerCase()}%`])
+      .first();
+    
+    if (registroExistente) {
+      console.log(`✅ Registro encontrado ID: ${registroExistente.id}, actualizando...`);
+      
+      await db("servicios")
+        .where({ id: registroExistente.id })
+        .update({ valor: String(valorAtributo) });
+        
+      return res.status(200).json({ 
+        success: true,
+        message: `Registro ${registroExistente.id} actualizado con éxito` 
+      });
+    } else {
+      console.log(`⚠️ No se encontró registro para "${nombreServicio}", atributo "${atributoNombre}"`);
+      console.log("Intentando búsqueda menos específica...");
+      
+      // Intento de búsqueda menos específica como respaldo
+      const registroAlternativo = await db("servicios")
+        .where({ 
+          reserva_id: parseInt(reservaId),
+          atributo: atributoNombre
+        })
+        .first();
+      
+      if (registroAlternativo) {
+        console.log(`✅ Se encontró registro alternativo ID: ${registroAlternativo.id}`);
+        
+        await db("servicios")
+          .where({ id: registroAlternativo.id })
+          .update({ valor: String(valorAtributo) });
+          
+        return res.status(200).json({ 
+          success: true,
+          message: `Registro alternativo ${registroAlternativo.id} actualizado` 
+        });
+      } else {
+        // Si realmente no existe, entonces creamos uno nuevo
+        console.log("Creando nuevo registro...");
+        
+        // Obtener información básica para crear un registro coherente
+        const nuevoId = await db("servicios").insert({
+          reserva_id: parseInt(reservaId),
+          nombre: nombreServicio,
+          atributo: atributoNombre,
+          valor: String(valorAtributo)
+        });
+        
+        return res.status(201).json({ 
+          success: true,
+          message: `Creado nuevo registro con ID ${nuevoId}` 
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error al actualizar servicio:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: "Error al actualizar: " + error.message 
+    });
+  }
 });
 
 // Iniciar el servidor en el puerto 3001
