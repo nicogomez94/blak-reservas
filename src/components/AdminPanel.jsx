@@ -19,6 +19,8 @@ const AdminPanel = () => {
     key: 'id',        
     direction: 'desc' // Mantener 'desc' para que el más reciente (ID mayor) aparezca primero
   });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchCategory, setSearchCategory] = useState('all'); // Categoría de búsqueda (nombre, fecha, etc.)
 
   // Función para agrupar servicios por nombre
   const agruparServicios = (servicios) => {
@@ -234,8 +236,58 @@ const AdminPanel = () => {
     setSortConfig({ key, direction });
   };
 
+  const filteredReservas = React.useMemo(() => {
+    if (!searchTerm.trim()) return reservas;
+    
+    return reservas.filter(reserva => {
+      const searchTermLower = searchTerm.toLowerCase();
+      
+      // Buscar en todos los campos
+      if (searchCategory === 'all') {
+        return (
+          (reserva.id?.toString() || '').includes(searchTermLower) ||
+          (reserva.fecha || '').toLowerCase().includes(searchTermLower) ||
+          (reserva.nombre || '').toLowerCase().includes(searchTermLower) ||
+          (reserva.email || '').toLowerCase().includes(searchTermLower) ||
+          (reserva.telefono || '').toLowerCase().includes(searchTermLower) ||
+          (reserva.auto || '').toLowerCase().includes(searchTermLower) ||
+          (reserva.status || '').toLowerCase().includes(searchTermLower) ||
+          // Buscar también en servicios
+          (reserva.servicios || []).some(servicio => 
+            (servicio.nombre || '').toLowerCase().includes(searchTermLower)
+          )
+        );
+      }
+      
+      // Buscar en un campo específico
+      if (searchCategory === 'id') {
+        return (reserva.id?.toString() || '').includes(searchTermLower);
+      }
+      if (searchCategory === 'fecha') {
+        return (reserva.fecha || '').toLowerCase().includes(searchTermLower);
+      }
+      if (searchCategory === 'nombre') {
+        return (reserva.nombre || '').toLowerCase().includes(searchTermLower);
+      }
+      if (searchCategory === 'email') {
+        return (reserva.email || '').toLowerCase().includes(searchTermLower);
+      }
+      if (searchCategory === 'telefono') {
+        return (reserva.telefono || '').toLowerCase().includes(searchTermLower);
+      }
+      if (searchCategory === 'auto') {
+        return (reserva.auto || '').toLowerCase().includes(searchTermLower);
+      }
+      if (searchCategory === 'status') {
+        return (reserva.status || '').toLowerCase().includes(searchTermLower);
+      }
+      
+      return false;
+    });
+  }, [reservas, searchTerm, searchCategory]);
+
   const sortedReservas = React.useMemo(() => {
-    const sortableReservas = [...reservas];
+    const sortableReservas = [...filteredReservas]; // Cambiar reservas por filteredReservas
     if (sortConfig.key) {
       sortableReservas.sort((a, b) => {
         // Manejar valores nulos o indefinidos
@@ -267,7 +319,7 @@ const AdminPanel = () => {
       });
     }
     return sortableReservas;
-  }, [reservas, sortConfig]);
+  }, [filteredReservas, sortConfig]); // Cambiar la dependencia de reservas a filteredReservas
 
   useEffect(() => {
     if (loggedIn) fetchReservas();
@@ -284,6 +336,41 @@ const AdminPanel = () => {
         <button className="btn-refresh" onClick={fetchReservas}>
           Actualizar Datos
         </button>
+      </div>
+      
+      <div className="search-container">
+        <div className="search-inputs">
+          <select 
+            value={searchCategory} 
+            onChange={(e) => setSearchCategory(e.target.value)}
+            className="search-category"
+          >
+            <option value="all">Todos los campos</option>
+            <option value="id">ID</option>
+            <option value="fecha">Fecha</option>
+            <option value="nombre">Nombre</option>
+            <option value="email">Email</option>
+            <option value="telefono">Teléfono</option>
+            <option value="auto">Vehículo</option>
+            <option value="status">Estado</option>
+          </select>
+          
+          <input
+            type="text"
+            placeholder="Buscar reservas..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          
+          <button 
+            onClick={() => setSearchTerm('')}
+            className="search-clear-btn"
+            title="Limpiar búsqueda"
+          >
+            ✖
+          </button>
+        </div>
       </div>
       
       <table className="reservas-table">
